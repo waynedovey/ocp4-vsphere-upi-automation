@@ -1,0 +1,115 @@
+---
+- hosts: localhost
+  vars: 
+    bootstrapContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64') }}"
+    masterContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64') }}"
+    workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
+    templateName : rhcos-4.2.0-x86_64-vmware
+    folder : "/{{ vcenter.datacenter }}/vm/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+  tasks:
+    - name: "Bootstrap base64"
+      debug:
+        msg: "{{ bootstrapContent }}" 
+    - name: "Master base64"
+      debug:
+        msg: "{{ masterContent }}" 
+    - name: "Worker base64 "
+      debug:
+        msg: "{{ workerContent }}" 
+    - name: Create bootstrap VM from the template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: bootstrap
+        state: poweredon
+        template: bootstrap-template
+        disk:
+        - size_gb: 16 
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 8192 
+          num_cpus: 4
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network }}"
+        wait_for_ip_address: no 
+        customvalues:
+          - key: guestinfo.ignition.config.data
+            value: "{{ bootstrapContent }}"
+          - key: guestinfo.ignition.config.data.encoding
+            value: base64
+          - key: disk.EnableUUID
+            value: "TRUE"
+    - name: Create master VMs from ther template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredon
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}" 
+        hardware:
+          memory_mb: 12288
+          num_cpus: 4
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ masterContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+      loop:
+        - { name : "master0", template: "master0-template"}
+        - { name : "master1", template: "master1-template"}
+        - { name : "master2", template: "master2-template"}
+    - name: Create worked VMs from the template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredon
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 8192
+          num_cpus: 4
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+      loop:
+        - { name : "worker0", template: "worker0-template"}
+        #- { name : "worker1", template: "worker1-template"}
+        #- { name : "worker2", template: "worker2-template"}
+...
