@@ -21,12 +21,13 @@ platform:
     password: {{ vcenter.password }}
     datacenter: {{ vcenter.datacenter }}
     defaultDatastore: {{ vcenter.datastore }}
+fips: false
 pullSecret: '{{ config.pullSecret | to_json }}'
 sshKey: '{{ config.sshKey }}'
-imageContentSources:
-- mirrors:
-  - registry.ocp4.lab.gsslab.pek2.redhat.com:5000/ocp4/openshift4
-  source: quay.io/openshift-release-dev/ocp-release
-- mirrors:
-  - registry.ocp4.lab.gsslab.pek2.redhat.com:5000/ocp4/openshift4
-  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+#imageContentSources:
+#- mirrors:
+#  - registry.ocp4.lab.gsslab.pek2.redhat.com:5000/ocp4/openshift4
+#  source: quay.io/openshift-release-dev/ocp-release
+#- mirrors:
+#  - registry.ocp4.lab.gsslab.pek2.redhat.com:5000/ocp4/openshift4
+#  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev

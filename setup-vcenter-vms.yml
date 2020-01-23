@@ -117,6 +117,8 @@
         - { name : "worker0", template: "{{ templateName }}" }
         #- { name : "worker1", template: "worker1-template" }
         #- { name : "worker2", template: "worker2-template" }
+        
+
     - name: Update Mac Address
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
       environment:
@@ -136,6 +138,28 @@
         - { name : "worker0", mac: "{{ config.worker0mac }}" }
 #        - { name : "worker1", mac: "{{ config.worker1mac }}" }
 #        - { name : "worker2", mac: "{{ config.worker2mac }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+
+    - name: Update CPU latencySensitivity
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+      loop:
+        - { name : "bootstrap" }
+        - { name : "master0" }
+        - { name : "master1" } 
+        - { name : "master2" }
+        - { name : "worker0" }
       retries: 3
       delay: 3
       register: result
