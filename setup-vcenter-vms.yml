@@ -129,14 +129,17 @@
         GOVC_DATACENTER: "{{ vcenter.datacenter }}"
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
       loop:
-        - { name : "bootstrap", mac: "config.bootstrapmac" }
-        - { name : "master0", mac: "config.master0mac" }
-        - { name : "master1", mac: "config.master1mac" }
-        - { name : "master2", mac: "config.master2mac" }
-        - { name : "worker0", mac: "config.worker0mac" }
-#        - { name : "worker1", mac: "config.worker1mac" }
-#        - { name : "worker2", mac: "config.worker2mac" }
-
+        - { name : "bootstrap", mac: "{{ config.bootstrapmac }}" }
+        - { name : "master0", mac: "{{ config.master0mac }}" }
+        - { name : "master1", mac: "{{ config.master1mac }}" }
+        - { name : "master2", mac: "{{ config.master2mac }}" }
+        - { name : "worker0", mac: "{{ config.worker0mac }}" }
+#        - { name : "worker1", mac: "{{ config.worker1mac }}" }
+#        - { name : "worker2", mac: "{{ config.worker2mac }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
 
     - name: Start all VM's
       vmware_guest:
