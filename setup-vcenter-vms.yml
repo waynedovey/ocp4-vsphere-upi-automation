@@ -4,10 +4,10 @@
     bootstrapContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64') }}"
     masterContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64') }}"
     workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
-    #templateName : rhcos-4.2.0-x86_64-vmware
     templateName : rhcos-4.3.0-x86_64-vmware
     folder : "/{{ vcenter.datacenter }}/vm/{{ config.clusterName }}"
     datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
   tasks:
     - name: "Bootstrap base64"
       debug:
@@ -24,12 +24,12 @@
         username: "{{ vcenter.username }}"
         password: "{{ vcenter.password }}"
         datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
         validate_certs: no
         folder: "{{ folder }}"
         name: bootstrap
         state: poweredoff
-        #template: bootstrap-template
-        template: rhcos-4.3.0-x86_64-vmware
+        template: "{{ templateName }}"
         disk:
         - size_gb: 16 
           type: thin
@@ -54,6 +54,7 @@
         username: "{{ vcenter.username }}"
         password: "{{ vcenter.password }}"
         datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
         validate_certs: no
         folder: "{{ folder }}"
         name: "{{ item.name }}"
@@ -78,18 +79,17 @@
          - key: disk.EnableUUID
            value: "TRUE"
       loop:
-        #- { name : "master0", template: "master0-template"}
-        #- { name : "master1", template: "master1-template"}
-        #- { name : "master2", template: "master2-template"}
-        - { name : "master0", template: "rhcos-4.3.0-x86_64-vmware"}
-        - { name : "master1", template: "rhcos-4.3.0-x86_64-vmware"}
-        - { name : "master2", template: "rhcos-4.3.0-x86_64-vmware"}
+        - { name : "master0", template: "{{ templateName }}" }
+        - { name : "master1", template: "{{ templateName }}" }
+        - { name : "master2", template: "{{ templateName }}" }
+
     - name: Create worked VMs from the template
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
         password: "{{ vcenter.password }}"
         datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
         validate_certs: no
         folder: "{{ folder }}"
         name: "{{ item.name }}"
@@ -114,8 +114,44 @@
          - key: disk.EnableUUID
            value: "TRUE"
       loop:
-        #- { name : "worker0", template: "worker0-template"}
-        - { name : "worker0", template: "rhcos-4.3.0-x86_64-vmware"}
-        #- { name : "worker1", template: "worker1-template"}
-        #- { name : "worker2", template: "worker2-template"}
+        - { name : "worker0", template: "{{ templateName }}" }
+        #- { name : "worker1", template: "worker1-template" }
+        #- { name : "worker2", template: "worker2-template" }
+    - name: Update Mac Address
+      command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+      loop:
+        - { name : "bootstrap", mac: "config.bootstrapmac" }
+        - { name : "master0", mac: "config.master0mac" }
+        - { name : "master1", mac: "config.master1mac" }
+        - { name : "master2", mac: "config.master2mac" }
+        - { name : "worker0", mac: "config.worker0mac" }
+#        - { name : "worker1", mac: "config.worker1mac" }
+#        - { name : "worker2", mac: "config.worker2mac" }
+
+
+    - name: Start all VM's
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredon
+      loop:
+        - { name : "bootstrap" }
+        - { name : "master0" }
+        - { name : "master1" }
+        - { name : "master2" }
+        - { name : "worker0" }
 ...

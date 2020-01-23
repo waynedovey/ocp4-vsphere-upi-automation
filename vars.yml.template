@@ -4,6 +4,13 @@ bootstrap:
 config:
   baseDomain: ocp.example.com 
   clusterName: ocp4
+  bootstrapmac: 00:50:56:ab:b8:01
+  master0mac: 00:50:56:ab:b8:02
+  master1mac: 00:50:56:ab:b8:03
+  master2mac: 00:50:56:ab:b8:04
+  worker0mac: 00:50:56:ab:b8:05
+  worker1mac: 00:50:56:ab:b8:06
+  worker2mac: 00:50:56:ab:b8:07
   proxy: ""
   no_proxy: ""
   sshKey: ssh-rsa AAAAB3Nza
@@ -14,6 +21,7 @@ vcenter:
   username: administrator@vsphere.local
   password: 
   datacenter: test
+  cluster: vmware-testcluster
   vm_network: OpenShift-Network
 download:
   oc_client: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.2.13/openshift-client-linux-4.2.13.tar.gz"
