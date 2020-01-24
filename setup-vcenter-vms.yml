@@ -36,9 +36,9 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 8192 
+          memory_mb: 16384 
           num_cpus: 4
-          memory_reservation_lock: True
+          memory_reservation_lock: False
         networks:
         - name: "{{ vcenter.vm_network }}"
         wait_for_ip_address: no 
@@ -67,7 +67,7 @@
           type: thin
           datastore: "{{ datastore }}" 
         hardware:
-          memory_mb: 12288
+          memory_mb: 16384
           num_cpus: 4
           memory_reservation_lock: True
         networks:
@@ -104,7 +104,7 @@
         hardware:
           memory_mb: 8192
           num_cpus: 4
-          memory_reservation_lock: True
+          memory_reservation_lock: False
         networks:
         - name: "{{ vcenter.vm_network }}"
         wait_for_ip_address: no
