@@ -1,9 +1,11 @@
 apiVersion: v1
 baseDomain: {{ config.baseDomain }}
+{% if set_proxy is defined and set_proxy | bool %}
 proxy:
   httpProxy: {{ config.proxy }}
   httpsProxy: {{ config.proxy }}
   noProxy: {{ config.no_proxy }}
+{% endif %}
 compute:
 - hyperthreading: Enabled   
   name: worker

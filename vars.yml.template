@@ -1,6 +1,7 @@
 ---
 bootstrap:
   ignHttpLocation: http://192.168.0.x:8080/ignition/bootstrap.ign
+set_proxy: false
 config:
   baseDomain: ocp.example.com 
   clusterName: ocp4
