@@ -31,6 +31,10 @@ scp install-dir/bootstrap.ign root@192.168.86.180:/var/www/html/ignition
 ```sh 
 ansible-playbook -e @vars.yml setup-vcenter-vms.yml --ask-vault-pass
 ```
+# GSS LaB 
+```sh 
+ansible-playbook -e @vars-gsslab.yml setup-vcenter-vms.yml --ask-vault-pass
+```
 
 ```sh
 journalctl -b -f -u bootkube.service
