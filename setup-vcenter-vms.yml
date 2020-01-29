@@ -36,9 +36,9 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 16384 
+          memory_mb: 8192
           num_cpus: 4
-          memory_reservation_lock: False
+          memory_reservation_lock: True
         networks:
         - name: "{{ vcenter.vm_network }}"
         wait_for_ip_address: no 
@@ -85,7 +85,7 @@
         - { name : "master1", template: "{{ templateName }}" }
         - { name : "master2", template: "{{ templateName }}" }
 
-    - name: Create worked VMs from the template
+    - name: Create worker VMs from the template
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -104,7 +104,7 @@
         hardware:
           memory_mb: 8192
           num_cpus: 4
-          memory_reservation_lock: False
+          memory_reservation_lock: True
         networks:
         - name: "{{ vcenter.vm_network }}"
         wait_for_ip_address: no
@@ -117,8 +117,46 @@
            value: "TRUE"
       loop:
         - { name : "worker0", template: "{{ templateName }}" }
-#        - { name : "worker1", template: "{{ templateName }}" }
-#        - { name : "worker2", template: "{{ templateName }}" }
+        - { name : "worker1", template: "{{ templateName }}" }
+        - { name : "worker2", template: "{{ templateName }}" }
+
+    - name: Create Storage VMs from the template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        - size_gb: 30
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 8192
+          num_cpus: 4
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+      loop:
+        - { name : "storage0", template: "{{ templateName }}" }
+        - { name : "storage1", template: "{{ templateName }}" }
+        - { name : "storage2", template: "{{ templateName }}" }
 
     - name: Update Mac Address
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
@@ -138,8 +176,11 @@
         - { name : "master1", mac: "{{ config.master1mac }}" }
         - { name : "master2", mac: "{{ config.master2mac }}" }
         - { name : "worker0", mac: "{{ config.worker0mac }}" }
-#        - { name : "worker1", mac: "{{ config.worker1mac }}" }
-#        - { name : "worker2", mac: "{{ config.worker2mac }}" }
+        - { name : "worker1", mac: "{{ config.worker1mac }}" }
+        - { name : "worker2", mac: "{{ config.worker2mac }}" }
+        - { name : "storage0", mac: "{{ config.storage0mac }}" }
+        - { name : "storage1", mac: "{{ config.storage1mac }}" }
+        - { name : "storage2", mac: "{{ config.storage2mac }}" }
       retries: 3
       delay: 3
       register: result
@@ -163,8 +204,11 @@
         - { name : "master1" } 
         - { name : "master2" }
         - { name : "worker0" }
-#        - { name : "worker1" }
-#        - { name : "worker2" }
+        - { name : "worker1" }
+        - { name : "worker2" }
+        - { name : "storage0" }
+        - { name : "storage1" }
+        - { name : "storage2" }
       retries: 3
       delay: 3
       register: result
@@ -186,4 +230,9 @@
         - { name : "master1" }
         - { name : "master2" }
         - { name : "worker0" }
+        - { name : "worker1" }
+        - { name : "worker2" }
+        - { name : "storage0" }
+        - { name : "storage1" }
+        - { name : "storage2" }
 ...

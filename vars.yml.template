@@ -11,6 +11,9 @@ config:
   worker0mac: 00:50:56:ab:b8:05
   worker1mac: 00:50:56:ab:b8:06
   worker2mac: 00:50:56:ab:b8:07
+  storage0mac: 00:50:56:ab:b8:08
+  storage1mac: 00:50:56:ab:b8:09
+  storage2mac: 00:50:56:ab:b8:10
   proxy: ""
   no_proxy: ""
   sshKey: ssh-rsa AAAAB3Nza
