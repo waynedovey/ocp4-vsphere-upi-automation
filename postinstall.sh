@@ -10,9 +10,15 @@ oc apply -f ./postinstall/HTPasswd.yml
 oc adm policy add-cluster-role-to-user cluster-admin admin
 
 # OCS Storage 
-oc label node/storage0.ocp4.lab.gsslab.pek2.redhat.com role=storage-node
-oc label node/storage1.ocp4.lab.gsslab.pek2.redhat.com role=storage-node
-oc label node/storage2.ocp4.lab.gsslab.pek2.redhat.com role=storage-node
+
+oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
+
+for I in `oc get node | grep storage | awk '{print $1}'`;
+ do 
+   oc label node/$I role=storage-node;
+   oc adm drain $I --ignore-daemonsets --delete-local-data;
+   oc adm uncordon $I;
+done
 
 oc create -f postinstall/rhocs-namespace.yaml
 oc create -f postinstall/rhocs-operatorgroup.yaml
