@@ -10,8 +10,7 @@ oc apply -f ./postinstall/HTPasswd.yml
 oc adm policy add-cluster-role-to-user cluster-admin admin
 
 # OCS Storage 
-
-oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
+##oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
 
 for I in `oc get node | grep storage | awk '{print $1}'`;
  do 
