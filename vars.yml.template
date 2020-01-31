@@ -22,6 +22,7 @@ config:
 vcenter:
   ip: 
   datastore: datastore1
+  defaultdatastore: datastore1
   username: administrator@vsphere.local
   password: 
   datacenter: test

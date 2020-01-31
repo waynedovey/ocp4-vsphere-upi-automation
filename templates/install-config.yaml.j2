@@ -22,7 +22,7 @@ platform:
     username: {{ vcenter.username }}
     password: {{ vcenter.password }}
     datacenter: {{ vcenter.datacenter }}
-    defaultDatastore: {{ vcenter.datastore }}
+    defaultDatastore: {{ vcenter.defaultdatastore }}
 fips: false
 pullSecret: '{{ config.pullSecret | to_json }}'
 sshKey: '{{ config.sshKey }}'
