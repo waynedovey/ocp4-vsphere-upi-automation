@@ -49,6 +49,10 @@
             value: base64
           - key: disk.EnableUUID
             value: "TRUE"
+          - key: timezone
+            value: "UTC"
+          - key: hwclockUTC
+            value: "TRUE"
 
     - name: Create master VMs from ther template
       vmware_guest:
@@ -80,6 +84,10 @@
            value: base64
          - key: disk.EnableUUID
            value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
       loop:
         - { name : "master0", template: "{{ templateName }}" }
         - { name : "master1", template: "{{ templateName }}" }
@@ -102,8 +110,8 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 8192
-          num_cpus: 4
+          memory_mb: 32768
+          num_cpus: 8
           memory_reservation_lock: True
         networks:
         - name: "{{ vcenter.vm_network }}"
@@ -114,6 +122,10 @@
          - key: guestinfo.ignition.config.data.encoding
            value: base64
          - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
            value: "TRUE"
       loop:
         - { name : "worker0", template: "{{ templateName }}" }
@@ -152,6 +164,10 @@
          - key: guestinfo.ignition.config.data.encoding
            value: base64
          - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
            value: "TRUE"
       loop:
         - { name : "storage0", template: "{{ templateName }}" }
