@@ -10,9 +10,13 @@ oc create secret generic htpass-secret --from-file=htpasswd=./postinstall/users.
 oc apply -f ./postinstall/HTPasswd.yml
 oc adm policy add-cluster-role-to-user cluster-admin admin
 
-# OCS Storage 
-##oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
+# Secrets Cleanup kubeadmin
+oc delete secrets kubeadmin -n kube-system
+oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status
 
+# OCS Storage 
+
+# Purge Storage nodes
 for I in `oc get node | grep storage | awk '{print $1}'`;
  do 
    oc label node/$I role=storage-node;
@@ -20,23 +24,64 @@ for I in `oc get node | grep storage | awk '{print $1}'`;
    oc adm uncordon $I;
 done
 
+# Chrony NTPD settings - TBD Automate NTP Endpoint
+
+# Chrony NTPD master
+oc apply -f postinstall/99_masters-chrony-configuration.yml
+for i in {1..10}
+do
+  number=$(oc describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}');
+  if ((number == 3)); then
+    echo "machineconfigpool Configuration completed";
+    break;
+  else
+    echo "cluster still configuring";
+    sleep 30;
+  fi
+done
+
+# Chrony NTPD Worker
+oc apply -f postinstall/99_workers-chrony-configuration.yml
+
+for i in {1..10}
+do
+  number=$(oc describe machineconfigpool worker | tail -n7 | grep Ready | awk '{print $4}');
+  if ((number == 6)); then
+    echo "machineconfigpool Configuration completed";
+    break;
+  else
+    echo "cluster still configuring";
+    sleep 30;
+  fi
+done
+
+# Enable OCS Service 
 oc create -f postinstall/rhocs-namespace.yml
 oc create -f postinstall/rhocs-operatorgroup.yml
 oc project openshift-storage
 
-#oc apply -f postinstall/ocs-olm.yml
-# TBD automate cluster storage 
-##oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
+# Label Storage Nodes
+for I in `oc get nodes | grep storage | awk '{print $1}'`; 
+  do oc label nodes $I cluster.ocs.openshift.io/openshift-storage=''; 
+done
+# Dedicated Storage Nodes
+for I in `oc get nodes | grep storage | awk '{print $1}'`; 
+  do oc adm taint nodes $I node.ocs.openshift.io/storage=true:NoSchedule;
+done
 
-# Chrony NTPD settings - TBD Automate NTP Endpoint
-oc apply -f postinstall/99_masters-chrony-configuration.yml  
-oc apply -f postinstall/99_workers-chrony-configuration.yml
+oc apply -f postinstall/ocs-olm.yml
+sleep 300
+oc apply -f postinstall/ocs-StorageCluster.yml
+sleep 300
+# TBD automate cluster storage 
+oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
+oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
 
 # Registry Storage OCS
-#oc project openshift-image-registry
-#oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"managementState": "Managed"}}'
-#oc create -f postinstall/ocs4registry-pvc.yml
-#oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"storage": {"pvc": {"claim": "image-registry-storage"}}}}'
+oc project openshift-image-registry
+oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"managementState": "Managed"}}'
+oc create -f postinstall/ocs4registry-pvc.yml
+oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"storage": {"pvc": {"claim": "image-registry-storage"}}}}'
 
 # Install APP wildcard Cert
 oc create configmap custom-ca \
@@ -80,4 +125,4 @@ oc create -f postinstall/logging/eo-og.yml
 oc create -f postinstall/logging/eo-sub.yml
 oc project openshift-operators-redhat
 oc create -f postinstall/logging/eo-rbac.yml
-oc create -f postinstall/logging/cluster-logging-resourse.yaml
+#oc create -f postinstall/logging/cluster-logging-resource.yml
