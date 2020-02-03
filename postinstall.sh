@@ -1,5 +1,18 @@
 #!/bin/bash
 export KUBECONFIG=/root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+# Get Cluster Status
+
+for i in {1..10}
+do
+  clusterstatus=$(oc get co | awk '{print $3}' | grep -v AVAILABLE | grep True| wc -l);
+  if ((clusterstatus == 27)); then
+    echo "Cluster build completed";
+    break;
+  else
+    echo "Cluster still configuring";
+    sleep 30;
+  fi
+done
 
 # User Auth
 rm -fr postinstall/users.htpasswd
@@ -12,23 +25,24 @@ oc adm policy add-cluster-role-to-user cluster-admin admin
 
 # Secrets Cleanup kubeadmin
 oc delete secrets kubeadmin -n kube-system
-oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status
 
-# OCS Storage 
-
-# Purge Storage nodes
-for I in `oc get node | grep storage | awk '{print $1}'`;
- do 
-   oc label node/$I role=storage-node;
-   oc adm drain $I --ignore-daemonsets --delete-local-data;
-   oc adm uncordon $I;
+for i in {1..10}
+do
+  authentication=$(oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status | awk '{print $3}');
+  if ((authentication = False )); then
+    echo "Authentication completed";
+    break;
+  else
+    echo "Authentication still configuring";
+    sleep 30;
+  fi
 done
-
-# Chrony NTPD settings - TBD Automate NTP Endpoint
 
 # Chrony NTPD master
 oc apply -f postinstall/99_masters-chrony-configuration.yml
-for i in {1..10}
+
+sleep 20;
+for i in {1..50}
 do
   number=$(oc describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}');
   if ((number == 3)); then
@@ -43,7 +57,8 @@ done
 # Chrony NTPD Worker
 oc apply -f postinstall/99_workers-chrony-configuration.yml
 
-for i in {1..10}
+sleep 20;
+for i in {1..50}
 do
   number=$(oc describe machineconfigpool worker | tail -n7 | grep Ready | awk '{print $4}');
   if ((number == 6)); then
@@ -56,10 +71,6 @@ do
 done
 
 # Enable OCS Service 
-oc create -f postinstall/rhocs-namespace.yml
-oc create -f postinstall/rhocs-operatorgroup.yml
-oc project openshift-storage
-
 # Label Storage Nodes
 for I in `oc get nodes | grep storage | awk '{print $1}'`; 
   do oc label nodes $I cluster.ocs.openshift.io/openshift-storage=''; 
@@ -69,10 +80,48 @@ for I in `oc get nodes | grep storage | awk '{print $1}'`;
   do oc adm taint nodes $I node.ocs.openshift.io/storage=true:NoSchedule;
 done
 
+# OCS Storage
+
+# Purge Storage nodes
+for I in `oc get node | grep storage | awk '{print $1}'`;
+ do
+#   oc label node/$I role=storage-node;
+   oc adm drain $I --ignore-daemonsets --delete-local-data;
+   oc adm uncordon $I;
+done
+
+oc create -f postinstall/rhocs-namespace.yml
+oc create -f postinstall/rhocs-operatorgroup.yml
+oc project openshift-storage
+
+# Create Storage Operator
 oc apply -f postinstall/ocs-olm.yml
-sleep 300
+for i in {1..50}
+do
+  operator=$(oc get csv | grep ocs-operator | awk '{print $6}');
+  if ((operator = Succeeded )); then
+    echo "Operator completed";
+    break;
+  else
+    echo "Operator still configuring";
+    sleep 30;
+  fi
+done
+
+# Create Cluster Storage
 oc apply -f postinstall/ocs-StorageCluster.yml
-sleep 300
+
+for i in {1..50}
+do
+  clusterstorage=$(oc get csv | grep ocs-operator | awk '{print $6}');
+  if ((clusterstorage = Succeeded )); then
+    echo "Storage Operator completed";
+    break;
+  else
+    echo "Storage Operator still configuring";
+    sleep 30;
+  fi
+done
 # TBD automate cluster storage 
 oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
 oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
