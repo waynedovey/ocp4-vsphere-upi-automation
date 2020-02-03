@@ -7,12 +7,12 @@ data:
       prometheusConfigReloaderBaseImage: quay.io/coreos/prometheus-config-reloader
       configReloaderBaseImage: quay.io/coreos/configmap-reload
       nodeSelector:
-        node-role.kubernetes.io/infra: ""
+        node-role.kubernetes.io/worker: ""
     prometheusK8s:
       retention: 7d
       baseImage: openshift/prometheus
       nodeSelector:
-        node-role.kubernetes.io/infra: ""
+        node-role.kubernetes.io/worker: ""
       volumeClaimTemplate:
         spec:
           storageClassName: ocs-storagecluster-cephfs
@@ -22,7 +22,7 @@ data:
     alertmanagerMain:
       baseImage: openshift/prometheus-alertmanager
       nodeSelector:
-        node-role.kubernetes.io/infra: ""
+        node-role.kubernetes.io/worker: ""
       volumeClaimTemplate:
         spec:
           storageClassName: ocs-storagecluster-cephfs
@@ -36,16 +36,16 @@ data:
     kubeStateMetrics:
       baseImage: quay.io/coreos/kube-state-metrics
       nodeSelector:
-        node-role.kubernetes.io/infra: ""
+        node-role.kubernetes.io/worker: ""
     grafana:
       baseImage: grafana/grafana
       nodeSelector:
-        node-role.kubernetes.io/infra: ""
+        node-role.kubernetes.io/worker: ""
     auth:
       baseImage: openshift/oauth-proxy
     k8sPrometheusAdapter:
       nodeSelector:
-        node-role.kubernetes.io/infra: ""
+        node-role.kubernetes.io/worker: ""
 metadata:
   name: cluster-monitoring-config
 namespace: openshift-monitoring
