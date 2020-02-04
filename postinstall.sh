@@ -174,4 +174,6 @@ oc create -f postinstall/logging/eo-og.yml
 oc create -f postinstall/logging/eo-sub.yml
 oc project openshift-operators-redhat
 oc create -f postinstall/logging/eo-rbac.yml
-#oc create -f postinstall/logging/cluster-logging-resource.yml
+oc create -f postinstall/logging/ClusterLogging.yml
+
+
