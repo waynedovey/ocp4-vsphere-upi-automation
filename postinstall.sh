@@ -29,7 +29,7 @@ oc delete secrets kubeadmin -n kube-system
 for i in {1..10}
 do
   authentication=$(oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status | awk '{print $3}');
-  if ((authentication = False )); then
+  if ((authentication == False )); then
     echo "Authentication completed";
     break;
   else
@@ -99,7 +99,7 @@ oc apply -f postinstall/ocs-olm.yml
 for i in {1..50}
 do
   operator=$(oc get csv | grep ocs-operator | awk '{print $6}');
-  if ((operator = Succeeded )); then
+  if ((operator == Succeeded )); then
     echo "Operator completed";
     break;
   else
@@ -110,7 +110,6 @@ done
 
 # Create Cluster Storage
 oc apply -f postinstall/ocs-StorageCluster.yml
-
 for i in {1..50}
 do
   clusterstorage=$(oc get csv | grep ocs-operator | awk '{print $6}');
@@ -174,6 +173,9 @@ oc create -f postinstall/logging/eo-og.yml
 oc create -f postinstall/logging/eo-sub.yml
 oc project openshift-operators-redhat
 oc create -f postinstall/logging/eo-rbac.yml
-oc create -f postinstall/logging/ClusterLogging.yml
+oc project openshift-logging
+oc create -f postinstall/logging/cluster-logging-og.yml
+oc create -f postinstall/logging/cluster-logging-olm.yml
+oc create -f postinstall/logging/cluster-logging-crd.yml
 
 
