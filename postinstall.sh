@@ -5,7 +5,7 @@ export KUBECONFIG=/root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
 for i in {1..10}
 do
   clusterstatus=$(oc get co | awk '{print $3}' | grep -v AVAILABLE | grep True| wc -l);
-  if ((clusterstatus == 27)); then
+  if (($clusterstatus == 27)); then
     echo "Cluster build completed";
     break;
   else
@@ -34,7 +34,7 @@ oc delete secrets kubeadmin -n kube-system
 for i in {1..10}
 do
   authentication=$(oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status | awk '{print $3}');
-  if ((authentication == False )); then
+  if (($authentication == False )); then
     echo "Authentication completed";
     break;
   else
@@ -50,7 +50,7 @@ sleep 20;
 for i in {1..50}
 do
   number=$(oc describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}');
-  if ((number == 3)); then
+  if (($number == 3)); then
     echo "machineconfigpool Configuration completed";
     break;
   else
@@ -66,7 +66,7 @@ sleep 20;
 for i in {1..50}
 do
   number=$(oc describe machineconfigpool worker | tail -n7 | grep Ready | awk '{print $4}');
-  if ((number == 6)); then
+  if (($number == 6)); then
     echo "machineconfigpool Configuration completed";
     break;
   else
@@ -104,7 +104,7 @@ oc apply -f postinstall/ocs-olm.yml
 for i in {1..50}
 do
   operator=$(oc get csv | grep ocs-operator | awk '{print $6}');
-  if ((operator == Succeeded )); then
+  if (($operator == Succeeded )); then
     echo "Operator completed";
     break;
   else
@@ -118,7 +118,7 @@ oc apply -f postinstall/ocs-StorageCluster.yml
 for i in {1..50}
 do
   clusterstorage=$(oc get csv | grep ocs-operator | awk '{print $6}');
-  if ((clusterstorage = Succeeded )); then
+  if (($clusterstorage = Succeeded )); then
     echo "Storage Operator completed";
     break;
   else
@@ -184,4 +184,6 @@ oc create -f postinstall/logging/cluster-logging-olm.yml
 sleep 30
 oc create -f postinstall/logging/cluster-logging-crd.yml
 
+# Storage cleanup 
 
+##oc patch crd cephclusters.ceph.rook.io -p '{"metadata":{"finalizers": []}}' --type=merge
