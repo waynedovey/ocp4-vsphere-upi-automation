@@ -78,11 +78,11 @@ done
 # Enable OCS Service 
 # Label Storage Nodes
 for I in `oc get nodes | grep storage | awk '{print $1}'`; 
-  do oc label nodes $I cluster.ocs.openshift.io/openshift-storage=''; 
+  do oc label nodes $I cluster.ocs.openshift.io/openshift-storage='' --overwrite;
 done
 # Dedicated Storage Nodes
 for I in `oc get nodes | grep storage | awk '{print $1}'`; 
-  do oc adm taint nodes $I node.ocs.openshift.io/storage=true:NoSchedule;
+  do oc adm taint nodes $I node.ocs.openshift.io/storage=true:NoSchedule --overwrite;
 done
 
 # OCS Storage
