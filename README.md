@@ -47,3 +47,8 @@ export KUBECONFIG=/root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
 ```sh
 bin/openshift-install wait-for install-complete --dir=/root/ocp4-vsphere-upi-automation/install-dir
 ```
+
+Post Deployment Tasks 
+```sh
+ansible-playbook -e @vars-gsslab.yml post-install.yml --ask-vault-pass
+```

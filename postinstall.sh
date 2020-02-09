@@ -90,7 +90,6 @@ done
 # Purge Storage nodes
 for I in `oc get node | grep storage | awk '{print $1}'`;
  do
-#   oc label node/$I role=storage-node;
    oc adm drain $I --ignore-daemonsets --delete-local-data;
    oc adm uncordon $I;
 done
@@ -131,10 +130,9 @@ oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kuber
 oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
 
 # Registry Storage OCS
-oc project openshift-image-registry
-oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"managementState": "Managed"}}'
-oc create -f postinstall/ocs4registry-pvc.yml
-oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"storage": {"pvc": {"claim": "image-registry-storage"}}}}'
+oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"managementState": "Managed"}}' -n openshift-image-registry
+oc create -f postinstall/ocs4registry-pvc.yml -n openshift-image-registry
+oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"storage": {"pvc": {"claim": "image-registry-storage"}}}}' -n openshift-image-registry
 
 # Install APP wildcard Cert
 oc create configmap custom-ca \

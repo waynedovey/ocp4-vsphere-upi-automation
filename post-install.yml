@@ -1,0 +1,242 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+  #   htpasswdpath: "./postinstall/users.htpasswd"
+  #   htpasswd_name: "my_htpasswd_provider"
+  #   htpasswd_pw: "redhat"
+  #   htpasswd_admin_users: "admin"
+  #   ldap_name: "my_ldap_provider"
+  #   ldap_pw: "testuser3"
+  #   ldap_bindDN: "uid=testuser3,ou=People,dc=example,dc=com"
+  #   ldap_url: "ldap://helper.ocp4.lab.gsslab.pek2.redhat.com/ou=people,dc=example,dc=com?uid"
+  #   ldap_admin_users: "testuser3"
+  #   oc_admin_role: "cluster-admin"
+  #   oc_app_domain: "apps.ocp4.lab.gsslab.pek2.redhat.com"
+  #   oc_api_domain: "api.ocp4.lab.gsslab.pek2.redhat.com"
+  environment:
+    KUBECONFIG: ./kubeconfig
+   #KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+  tasks:
+
+  - name: Get Nodes 
+    command: oc get nodes 
+    register: result
+
+  - set_fact:
+      clusternodes: "{{ result.stdout | from_yaml }}"
+
+  - debug:
+      msg: "{{ clusternodes }}"
+
+  - name: Set HTPasswd
+    htpasswd:
+      path: "{{ htpasswdpath }}"
+      name: "{{ admin_users }}"
+      password: "{{ htpasswd_pw }}"
+      crypt_scheme: md5_crypt
+    register: htpasswd
+
+  - name: Create HTPasswd Secret
+    command: oc create secret generic htpass-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
+    register: result 
+
+  - name: Enable the HTPasswd User
+    k8s:
+      state: present
+      definition:    
+        apiVersion: config.openshift.io/v1
+        kind: OAuth
+        metadata:
+            name: cluster
+        spec:
+            identityProviders:
+            - name: "{{ htpasswd_name }}"
+            mappingMethod: claim
+            type: HTPasswd
+            htpasswd:
+                fileData:
+                name: htpasswd-secret
+
+  - name: Create LDAP Secret 
+    command: oc create secret generic ldap-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
+    register: result  
+    
+  - name: Enable the HTPasswd User
+    k8s:
+      state: present
+      definition:    
+        apiVersion: config.openshift.io/v1
+        kind: OAuth
+        metadata:
+          name: cluster
+        spec:
+            identityProviders:
+            - name: "{{ ldap_name }}"
+            mappingMethod: claim
+            type: LDAP
+            ldap:
+            attributes:
+                id:
+                - dn
+                email:
+                - mail
+                name:
+                - cn
+                preferredUsername:
+                - uid
+            bindDN: "{{ ldap_bindDN }}"
+            bindPassword:
+                name: ldap-secret
+            insecure: true
+            url: "{{ ldap_url }}"
+
+  - name: Elevate Users
+    command: oc adm policy add-cluster-role-to-user "{{ oc_admin_role }}" "{{ item }}"
+    loop:
+      - "{{ htpasswd_admin_users }}"
+      - "{{ ldap_admin_users }}"
+
+  - name: Remove generic Kubeadmin User
+    command: oc delete secrets kubeadmin -n kube-system
+    register: result
+ 
+ # TODO Create Base64 Template 99_masters-chrony-configuration.yml    
+
+# TODO STATUS oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status | awk '{print $3}'
+ 
+  - name: Configure Chrony for Masters 
+    k8s:
+      state: present
+      apply: "yes" 
+      src: "./postinstall/99_masters-chrony-configuration.yml"
+
+# TODO Create Base64 Template 99_masters-chrony-configuration.yml          
+ 
+# TODO STATUS describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}'
+
+  - name: Configure Chrony for Workers 
+    k8s:
+      state: present
+      apply: "yes" 
+      src: "./postinstall/99_workers-chrony-configuration.yml"
+
+# TODO Figure out how to declare storage nodes 
+
+  - name: Label and Taint Storage Nodes 
+    command: "{{ item }}"
+    register: result
+    loop: 
+        - "oc label nodes {{ storagenodes }} cluster.ocs.openshift.io/openshift-storage='' --overwrite"
+        - "oc adm taint nodes {{ storagenodes }} node.ocs.openshift.io/storage=true:NoSchedule --overwrite"
+
+  - name: rain and uncordon Storage Nodes
+    command: "{{ item }}"
+    register: result
+    loop: 
+        - "oc adm drain {{ storagenodes }} --ignore-daemonsets --delete-local-data"
+        - "oc adm uncordon {{ storagenodes }}" 
+
+  - name: Create Storage Namespace 
+    k8s:
+      state: present
+      src: "./postinstall/rhocs-namespace.yml"
+
+  - name: Create Storage Operator Group
+    k8s:
+      state: present
+      src: "./postinstall/rhocs-operatorgroup.yml"
+
+  - name: Create the Storage OLM
+    k8s:
+      state: present
+      apply: "yes" 
+      src: "./postinstall/ocs-olm.yml"
+
+# TODO STATUS oc get csv | grep ocs-operator | awk '{print $6}'
+
+  - name: Create the Storage Cluster
+    k8s:
+      state: present
+      apply: "yes" 
+      src: "./postinstall/ocs-StorageCluster.yml"
+
+# TODO STATUS oc get csv | grep ocs-operator | awk '{print $6}'
+# TODO Figure out the escape sequence 
+
+  - name: Patch the Storage cluster 
+    command: "{{ item }}"
+    register: result
+    loop: 
+        - "oc patch storageclass thin -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"false\"}}}'"
+        - "oc patch storageclass ocs-storagecluster-cephfs -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"true\"}}}'"
+
+  - name: Change registry Operator to "Managed" 
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"managementState\": \"Managed\"}}' -n openshift-image-registry"
+    register: result
+
+  - name: Enable Registry PVC
+    k8s:
+      state: present
+      apply: "yes" 
+      namespace: "openshift-image-registry"
+      src: "./postinstall/ocs4registry-pvc.yml"
+
+  - name: Change registry Operator to "Managed" 
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
+    register: result
+
+  - name: Create App Cert Configmap
+    command: "oc create configmap custom-ca --from-file=ca-bundle.crt=certs/{{ oc_app_domain }}.pem -n openshift-config"
+    register: result
+
+  - name: Update the CA Cert with the Custom CA
+    command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
+    register: result
+    
+  - name: Create the Certificate Secret 
+    command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
+    register: result
+
+  - name: Create the Certificate Secret 
+    command: "oc create secret tls {{ oc_app_domain }}.com  --cert=certs/{{ oc_app_domain }}.pem --key=certs/{{ oc_app_domain }}.key -n openshift-ingress"
+    register: result
+        
+  - name: Enable the Certificate on Ingresscontroller
+    command: "oc patch ingresscontroller.operator default --type=merge -p '{\"spec\":{\"defaultCertificate\": {\"name\": \"{{ oc_app_domain }}\"}}}' -n openshift-ingress-operator"
+    register: result
+    
+  - name: Create the API Certificate
+    command: "oc create secret tls {{ oc_api_domain }} --cert=certs/{{ oc_api_domain }}.pem --key=certs/{{ oc_api_domain }}.key -n openshift-config"
+    register: result
+
+  - name: Enable the API Certificate
+    command: "oc patch apiserver cluster --type=merge -p '{\"spec\":{\"servingCerts\": {\"namedCertificates\": [{\"names\": [\"{{ oc_api_domain }}\"], \"servingCertificate\": {\"name\": \"{{ oc_api_domain }}\"}}]}}}'"
+    register: result
+
+  - name: Enable Monitoring Persistent Storage
+    k8s:
+      state: present
+      apply: "yes" 
+      src: "./postinstall/cluster-monitoring-config.yml"    
+
+  - name: Enable Cluster Logging 
+    command: "{{ item }}"
+    register: result
+    loop: 
+        - "oc create -f ./postinstall/logging/eo-namespace.yml"
+        - "oc create -f ./postinstall/logging/clo-namespace.yml"       
+        - "oc create -f ./postinstall/logging/eo-og.yml"
+        - "oc create -f ./postinstall/logging/eo-sub.yml"
+        - "oc create -f ./postinstall/logging/eo-rbac.yml -n openshift-operators-redhat" 
+        - "oc create -f ./postinstall/logging/cluster-logging-og.yml -n openshift-logging"
+        - "oc create -f ./postinstall/logging/cluster-logging-olm.yml -n openshift-logging"        
+
+  - name: Wait for Cluster CR to appear 
+    command: "sleep 30"
+    register: result
+                
+  - name: Create the CRD Logging 
+    command: "oc create -f ./postinstall/logging/cluster-logging-crd.yml"
+    register: result
+        
