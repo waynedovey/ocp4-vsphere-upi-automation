@@ -32,18 +32,19 @@
   - name: Set HTPasswd
     htpasswd:
       path: "{{ htpasswdpath }}"
-      name: "{{ admin_users }}"
+      name: "{{ htpasswd_admin_users }}"
       password: "{{ htpasswd_pw }}"
       crypt_scheme: md5_crypt
     register: htpasswd
 
   - name: Create HTPasswd Secret
     command: oc create secret generic htpass-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
-    register: result 
+    ignore_errors: yes
 
   - name: Enable the HTPasswd User
     k8s:
       state: present
+      apply: "yes" 
       definition:    
         apiVersion: config.openshift.io/v1
         kind: OAuth
@@ -60,11 +61,13 @@
 
   - name: Create LDAP Secret 
     command: oc create secret generic ldap-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
-    register: result  
+    register: result
+    ignore_errors: yes
     
-  - name: Enable the HTPasswd User
+  - name: Enable the LDAP User
     k8s:
       state: present
+      apply: "yes" 
       definition:    
         apiVersion: config.openshift.io/v1
         kind: OAuth

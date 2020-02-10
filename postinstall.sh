@@ -181,7 +181,3 @@ oc create -f postinstall/logging/cluster-logging-og.yml
 oc create -f postinstall/logging/cluster-logging-olm.yml
 sleep 30
 oc create -f postinstall/logging/cluster-logging-crd.yml
-
-# Storage cleanup 
-
-##oc patch crd cephclusters.ceph.rook.io -p '{"metadata":{"finalizers": []}}' --type=merge
