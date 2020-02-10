@@ -49,14 +49,14 @@
         apiVersion: config.openshift.io/v1
         kind: OAuth
         metadata:
-            name: cluster
+          name: cluster
         spec:
-            identityProviders:
-            - name: "{{ htpasswd_name }}"
+          identityProviders:
+          - name: "{{ htpasswd_name }}"
             mappingMethod: claim
             type: HTPasswd
             htpasswd:
-                fileData:
+              fileData:
                 name: htpasswd-secret
 
   - name: Create LDAP Secret 
@@ -67,19 +67,19 @@
   - name: Enable the LDAP User
     k8s:
       state: present
-      apply: "yes" 
+      #apply: "yes" 
       definition:    
         apiVersion: config.openshift.io/v1
         kind: OAuth
         metadata:
           name: cluster
         spec:
-            identityProviders:
-            - name: "{{ ldap_name }}"
+          identityProviders:
+          - name: "{{ ldap_name }}"
             mappingMethod: claim
             type: LDAP
             ldap:
-            attributes:
+              attributes:
                 id:
                 - dn
                 email:
@@ -88,11 +88,11 @@
                 - cn
                 preferredUsername:
                 - uid
-            bindDN: "{{ ldap_bindDN }}"
-            bindPassword:
+              bindDN: "{{ ldap_bindDN }}"
+              bindPassword:
                 name: ldap-secret
-            insecure: true
-            url: "{{ ldap_url }}"
+              insecure: true
+              url: "{{ ldap_url }}"
 
   - name: Elevate Users
     command: oc adm policy add-cluster-role-to-user "{{ oc_admin_role }}" "{{ item }}"
