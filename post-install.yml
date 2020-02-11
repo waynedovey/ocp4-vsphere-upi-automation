@@ -19,15 +19,16 @@
    KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
   tasks:
 
-  - name: Get Nodes 
-    command: oc get nodes 
+  - name: Get Storage Nodes 
+    shell: oc get nodes | grep storage | awk '{print $1}'
     register: result
+    #register: storagenodes
 
   - set_fact:
-      clusternodes: "{{ result.stdout | from_yaml }}"
+      storagenodes: "{{ result.stdout | from_yaml }}"
 
   - debug:
-      msg: "{{ clusternodes }}"
+      msg: "{{ storagenodes }}"
 
   - name: Set HTPasswd
     htpasswd:
@@ -44,19 +45,19 @@
   - name: Enable the HTPasswd User
     k8s:
       state: present
-      apply: "yes" 
+      #apply: "yes" 
       definition:    
         apiVersion: config.openshift.io/v1
         kind: OAuth
         metadata:
-            name: cluster
+          name: cluster
         spec:
-            identityProviders:
-            - name: "{{ htpasswd_name }}"
+          identityProviders:
+          - name: "{{ htpasswd_name }}"
             mappingMethod: claim
             type: HTPasswd
             htpasswd:
-                fileData:
+              fileData:
                 name: htpasswd-secret
 
   - name: Create LDAP Secret 
@@ -67,19 +68,19 @@
   - name: Enable the LDAP User
     k8s:
       state: present
-      apply: "yes" 
+      #apply: "yes" 
       definition:    
         apiVersion: config.openshift.io/v1
         kind: OAuth
         metadata:
           name: cluster
         spec:
-            identityProviders:
-            - name: "{{ ldap_name }}"
+          identityProviders:
+          - name: "{{ ldap_name }}"
             mappingMethod: claim
             type: LDAP
             ldap:
-            attributes:
+              attributes:
                 id:
                 - dn
                 email:
@@ -88,11 +89,11 @@
                 - cn
                 preferredUsername:
                 - uid
-            bindDN: "{{ ldap_bindDN }}"
-            bindPassword:
+              bindDN: "{{ ldap_bindDN }}"
+              bindPassword:
                 name: ldap-secret
-            insecure: true
-            url: "{{ ldap_url }}"
+              insecure: true
+              url: "{{ ldap_url }}"
 
   - name: Elevate Users
     command: oc adm policy add-cluster-role-to-user "{{ oc_admin_role }}" "{{ item }}"
@@ -103,6 +104,7 @@
   - name: Remove generic Kubeadmin User
     command: oc delete secrets kubeadmin -n kube-system
     register: result
+    ignore_errors: yes
  
  # TODO Create Base64 Template 99_masters-chrony-configuration.yml    
 
