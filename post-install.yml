@@ -15,8 +15,8 @@
   #   oc_app_domain: "apps.ocp4.lab.gsslab.pek2.redhat.com"
   #   oc_api_domain: "api.ocp4.lab.gsslab.pek2.redhat.com"
   environment:
-    KUBECONFIG: ./kubeconfig
-   #KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+   #KUBECONFIG: ./kubeconfig
+   KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
   tasks:
 
   - name: Get Nodes 
