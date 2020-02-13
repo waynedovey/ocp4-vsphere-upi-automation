@@ -26,7 +26,7 @@ platform:
 fips: false
 pullSecret: '{{ config.pullSecret | to_json }}'
 sshKey: '{{ config.sshKey }}'
-{% if disconnected is defined and set_proxy | bool %}
+{% if disconnected is defined and disconnected | bool %}
 additionalTrustBundle: |
 {{ lookup('file', 'certs/CACert.pem') }}
 imageContentSources:
