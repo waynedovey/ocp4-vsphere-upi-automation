@@ -24,9 +24,9 @@ oc apply -f ./postinstall/HTPasswd.yml
 oc adm policy add-cluster-role-to-user cluster-admin admin
 
 # LDAP Auth
-oc create secret generic ldap-secret --from-literal=bindPassword=testuser3 -n openshift-config
-oc apply -f ./postinstall/ldap-auth.yml
-oc adm policy add-cluster-role-to-user cluster-admin testuser3
+#oc create secret generic ldap-secret --from-literal=bindPassword=testuser3 -n openshift-config
+#oc apply -f ./postinstall/ldap-auth.yml
+#oc adm policy add-cluster-role-to-user cluster-admin testuser3
 
 # Secrets Cleanup kubeadmin
 oc delete secrets kubeadmin -n kube-system

@@ -26,34 +26,14 @@ platform:
 fips: false
 pullSecret: '{{ config.pullSecret | to_json }}'
 sshKey: '{{ config.sshKey }}'
-additionalTrustBundle: | 
-  -----BEGIN CERTIFICATE-----
-  MIIDyzCCArOgAwIBAgIJANPmLVdLKvgrMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNV
-  BAYTAkFVMQwwCgYDVQQIDANOU1cxGzAZBgNVBAoMElJlZCBIYXQgQ29uc3VsdGlu
-  ZzETMBEGA1UECwwKQ29uc3VsdGluZzELMAkGA1UEAwwCQ0ExIDAeBgkqhkiG9w0B
-  CQEWEXdkb3ZleUByZWRoYXQuY29tMB4XDTIwMDIxMTIyMzc0MFoXDTIzMDIxMDIy
-  Mzc0MFowfDELMAkGA1UEBhMCQVUxDDAKBgNVBAgMA05TVzEbMBkGA1UECgwSUmVk
-  IEhhdCBDb25zdWx0aW5nMRMwEQYDVQQLDApDb25zdWx0aW5nMQswCQYDVQQDDAJD
-  QTEgMB4GCSqGSIb3DQEJARYRd2RvdmV5QHJlZGhhdC5jb20wggEiMA0GCSqGSIb3
-  DQEBAQUAA4IBDwAwggEKAoIBAQCz6R9ePK0XSYgZF7zwgFUA0STH1p2vYZV8qVO9
-  wioGxcxaBja3+Y5ejCMEdeHfDUD/nI1ujit0ynJoiSe6li610Yig5wVynXfo7p1O
-  8sQMDY0cx7nk3tVaV0tzgc0IOZ2w6hv1C1RsXA3sMaOUocat7aBHg1l2fFKL9Jgo
-  PMpiedzP+cfhZkwmPbEep7uynb5kqKn3BLqCknu7AJ7iig2NqOiSLx1rkCheMJFO
-  NhZGYRrh4oxkNSoXAT7YyU9ZdZcUE6DR4V9WXfhnqY/iZp2w0pu0Z4JY4naYHIBA
-  z8EXKa0kVcxG63KPpI/MeAKy6Covp5nx2wKK3mFxL47GqPO3AgMBAAGjUDBOMB0G
-  A1UdDgQWBBRMlHP/AqU6CYRo3Ol2JIQ+hmLS9TAfBgNVHSMEGDAWgBRMlHP/AqU6
-  CYRo3Ol2JIQ+hmLS9TAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBI
-  WeLSPvz36vhrU8eaAAvsuVASddiLDywYwEg9VbJ7+cvaC2Gxfou4PmjhfNdtip5p
-  5syH2M3r7vkHOJbaCkRMWHuuTGN7WoCJ5ZkbITLzsXEDblMjNaRBt+MVYfN4mCs4
-  YGqU2xcoix4mVfz8bhLdS19PAv1+ybjyobLgR+hYQOsOI9Y2d+bFDNrmtxVIv10N
-  UWLO+SlAsz8OJAQL0EnmP4lYeRkHeBaJumCdGxTeHe/YaJ+aDaYi3xrCmNFTbmHZ
-  6FlaLK5okjDR//7Z4euFdLN35FiZ6RwTH6DtPSNTrup5jdn/q52iTg1fviZxiwfB
-  UiZ28o5sJ4VRdJmFWsB6
-  -----END CERTIFICATE-----
+{% if disconnected is defined and set_proxy | bool %}
+additionalTrustBundle: |
+{{ lookup('file', 'certs/CACert.pem') }}
 imageContentSources:
 - mirrors:
-  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.1-x86_64
+  - {{ container_registry }}/openshift/{{ ocp_release }}
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.1-x86_64
+  - {{ container_registry }}/openshift/{{ ocp_release }}
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+{% endif %}
