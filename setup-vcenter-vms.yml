@@ -148,9 +148,6 @@
         - size_gb: 16
           type: thin
           datastore: "{{ datastore }}"
-        - size_gb: 30
-          type: thin
-          datastore: "{{ datastore }}"
         hardware:
           memory_mb: 65536
           num_cpus: 16
