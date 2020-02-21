@@ -284,9 +284,6 @@
         - { name : "worker0" }
         - { name : "worker1" }
         - { name : "worker2" }
-        - { name : "storage0" }
-        - { name : "storage1" }
-        - { name : "storage2" }
 
     - name: Start all Storage Cluster VM's
       vmware_guest:
