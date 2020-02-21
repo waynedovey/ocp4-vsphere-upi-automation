@@ -131,7 +131,9 @@ oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations":
 
 # Registry Storage OCS
 oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"managementState": "Managed"}}' -n openshift-image-registry
-oc create -f postinstall/ocs4registry-pvc.yml -n openshift-image-registry
+#oc create -f postinstall/ocs4registry-pvc.yml -n openshift-image-registry
+#Thin PVC
+oc create -f postinstall/ocs4registry-thin-pvc.yml -n openshift-image-registry
 oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"storage": {"pvc": {"claim": "image-registry-storage"}}}}' -n openshift-image-registry
 
 # Install APP wildcard Cert
