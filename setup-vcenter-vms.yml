@@ -170,8 +170,9 @@
         - { name : "storage0", template: "{{ templateName }}" }
         - { name : "storage1", template: "{{ templateName }}" }
         - { name : "storage2", template: "{{ templateName }}" }
+      when: enable_ocs_storage == "true" 
 
-    - name: Update Mac Address
+    - name: Update Mac Address Core Cluster
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
@@ -191,15 +192,34 @@
         - { name : "worker0", mac: "{{ config.worker0mac }}" }
         - { name : "worker1", mac: "{{ config.worker1mac }}" }
         - { name : "worker2", mac: "{{ config.worker2mac }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+  
+    - name: Update Mac Address Store Nodes
+      command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network }}"
+      loop:
         - { name : "storage0", mac: "{{ config.storage0mac }}" }
         - { name : "storage1", mac: "{{ config.storage1mac }}" }
         - { name : "storage2", mac: "{{ config.storage2mac }}" }
       retries: 3
       delay: 3
       register: result
-      until: result.rc == 0
+      until: result.rc == 0    
+      when: enable_ocs_storage == "true" 
 
-    - name: Update CPU latencySensitivity
+    - name: Update CPU latencySensitivity Core Cluster
       command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
@@ -219,15 +239,34 @@
         - { name : "worker0" }
         - { name : "worker1" }
         - { name : "worker2" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+
+    - name: Update CPU latencySensitivity Core Cluster
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network }}"
+      loop:
         - { name : "storage0" }
         - { name : "storage1" }
         - { name : "storage2" }
       retries: 3
       delay: 3
       register: result
-      until: result.rc == 0
+      until: result.rc == 0      
+      when: enable_ocs_storage == "true" 
 
-    - name: Start all VM's
+    - name: Start all Core Cluster VM's
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -248,4 +287,20 @@
         - { name : "storage0" }
         - { name : "storage1" }
         - { name : "storage2" }
+
+    - name: Start all Storage Cluster VM's
+      vmware_guest:
+          hostname: "{{ vcenter.ip }}"
+          username: "{{ vcenter.username }}"
+          password: "{{ vcenter.password }}"
+          datacenter: "{{ vcenter.datacenter }}"
+          validate_certs: no
+          folder: "{{ folder }}"
+          name: "{{ item.name }}"
+          state: poweredon
+      loop:
+        - { name : "storage0" }
+        - { name : "storage1" }
+        - { name : "storage2" }  
+      when: enable_ocs_storage == "true" 
 ...
