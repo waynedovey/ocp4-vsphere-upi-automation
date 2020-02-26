@@ -149,7 +149,7 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 65536
+          memory_mb: 67584
           num_cpus: 16
           memory_reservation_lock: True
         networks:
@@ -170,7 +170,7 @@
         - { name : "storage0", template: "{{ templateName }}" }
         - { name : "storage1", template: "{{ templateName }}" }
         - { name : "storage2", template: "{{ templateName }}" }
-      when: enable_ocs_storage == "true" 
+      when: enable_ocs_storage|bool == True
 
     - name: Update Mac Address Core Cluster
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
@@ -217,7 +217,7 @@
       delay: 3
       register: result
       until: result.rc == 0    
-      when: enable_ocs_storage == "true" 
+      when: enable_ocs_storage|bool == True
 
     - name: Update CPU latencySensitivity Core Cluster
       command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
@@ -264,7 +264,7 @@
       delay: 3
       register: result
       until: result.rc == 0      
-      when: enable_ocs_storage == "true" 
+      when: enable_ocs_storage|bool == True
 
     - name: Start all Core Cluster VM's
       vmware_guest:
@@ -299,5 +299,5 @@
         - { name : "storage0" }
         - { name : "storage1" }
         - { name : "storage2" }  
-      when: enable_ocs_storage == "true" 
+      when: enable_ocs_storage|bool == True
 ...

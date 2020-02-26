@@ -17,6 +17,7 @@ done
 # User Auth
 rm -fr postinstall/users.htpasswd
 htpasswd -c -B -b postinstall/users.htpasswd admin redhat 
+htpasswd -B -b postinstall/users.htpasswd wdovey redhat 
 
 oc create secret generic htpass-secret --from-file=htpasswd=./postinstall/users.htpasswd -n openshift-config
 

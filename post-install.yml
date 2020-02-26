@@ -134,6 +134,7 @@
     loop: 
         - "oc label nodes {{ storagenodes }} cluster.ocs.openshift.io/openshift-storage='' --overwrite"
         - "oc adm taint nodes {{ storagenodes }} node.ocs.openshift.io/storage=true:NoSchedule --overwrite"
+    when: enable_ocs_storage|bool == True
 
   - name: rain and uncordon Storage Nodes
     command: "{{ item }}"
@@ -141,22 +142,26 @@
     loop: 
         - "oc adm drain {{ storagenodes }} --ignore-daemonsets --delete-local-data"
         - "oc adm uncordon {{ storagenodes }}" 
+    when: enable_ocs_storage|bool == True
 
   - name: Create Storage Namespace 
     k8s:
       state: present
       src: "./postinstall/rhocs-namespace.yml"
+    when: enable_ocs_storage|bool == True
 
   - name: Create Storage Operator Group
     k8s:
       state: present
       src: "./postinstall/rhocs-operatorgroup.yml"
+    when: enable_ocs_storage|bool == True
 
   - name: Create the Storage OLM
     k8s:
       state: present
       apply: "yes" 
       src: "./postinstall/ocs-olm.yml"
+    when: enable_ocs_storage|bool == True
 
 # TODO STATUS oc get csv | grep ocs-operator | awk '{print $6}'
 
@@ -165,6 +170,7 @@
       state: present
       apply: "yes" 
       src: "./postinstall/ocs-StorageCluster.yml"
+    when: enable_ocs_storage|bool == True
 
 # TODO STATUS oc get csv | grep ocs-operator | awk '{print $6}'
 # TODO Figure out the escape sequence 
@@ -175,6 +181,7 @@
     loop: 
         - "oc patch storageclass thin -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"false\"}}}'"
         - "oc patch storageclass ocs-storagecluster-cephfs -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"true\"}}}'"
+    when: enable_ocs_storage|bool == True
 
   - name: Change registry Operator to "Managed" 
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"managementState\": \"Managed\"}}' -n openshift-image-registry"
