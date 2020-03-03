@@ -1,8 +1,8 @@
 #!/bin/bash
 rm -fr redhat-operators-manifests
-export OCP_RELEASE=4.3.1-x86_64
-export LOCAL_REGISTRY='quay.ocp4.lab.gsslab.pek2.redhat.com:443'
-export LOCAL_REPOSITORY='openshift/ocp4.3.1-x86_64'
+export OCP_RELEASE=4.3.5-x86_64
+export LOCAL_REGISTRY='quay.ocp4.gsslab.brq.redhat.com:443'
+export LOCAL_REPOSITORY='openshift/ocp4.3.5-x86_64'
 export PRODUCT_REPO='openshift-release-dev'
 export LOCAL_SECRET_JSON='/root/.docker/config.json'
 export RELEASE_NAME="ocp-release"
@@ -10,32 +10,32 @@ export RELEASE_NAME="ocp-release"
 #docker login -u="openshift+openshift" -p="P276A6HFEGCN3D8857C3TSXQQWRI0P047H1TYCY0YJ8HYCDDQJ7LHZYQ57R2C3PY" quay.ocp4.lab.gsslab.pek2.redhat.com
 #docker login -u="openshift+openshift" -p="P276A6HFEGCN3D8857C3TSXQQWRI0P047H1TYCY0YJ8HYCDDQJ7LHZYQ57R2C3PY" quay.ocp4.lab.gsslab.pek2.redhat.com:443
 
-oc adm -a ${LOCAL_SECRET_JSON} release mirror \
-     --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE} \
-     --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
-     --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE} \
-     --insecure=true
+#oc adm -a ${LOCAL_SECRET_JSON} release mirror \
+#     --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE} \
+#     --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
+#     --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE} \
+#     --insecure=true
 
 #imageContentSources:
 #- mirrors:
-#  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.1-x86_64
+#  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.5-x86_64
 #  source: quay.io/openshift-release-dev/ocp-release
 #- mirrors:
-#  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.1-x86_64
+#  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.5-x86_64
 #  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 
 ### OLM 
-oc adm catalog build \
-    --appregistry-endpoint https://quay.io/cnr \
-    --appregistry-org redhat-operators \
-    --to=${LOCAL_REGISTRY}/openshift/redhat-operators:v1
+#oc adm catalog build \
+#    --appregistry-endpoint https://quay.io/cnr \
+#    --appregistry-org redhat-operators \
+#    --to=${LOCAL_REGISTRY}/openshift/redhat-operators:v1
 
 oc patch OperatorHub cluster --type json \
     -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
 
-oc adm catalog mirror \
-    ${LOCAL_REGISTRY}/openshift/redhat-operators:v1 \
-    ${LOCAL_REGISTRY}/openshift
+#oc adm catalog mirror \
+#    ${LOCAL_REGISTRY}/openshift/redhat-operators:v1 \
+#    ${LOCAL_REGISTRY}/openshift
 
 oc apply -f ./redhat-operators-manifests
 

@@ -5,6 +5,6 @@ metadata:
   namespace: openshift-marketplace
 spec:
   sourceType: grpc
-  image: quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/redhat-operators:v1
+  image: quay.ocp4.gsslab.brq.redhat.com:443/openshift/redhat-operators:v1
   displayName: My Red Hat Operator Catalog
   publisher: grpc
