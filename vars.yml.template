@@ -3,6 +3,7 @@ bootstrap:
   ignHttpLocation: http://192.168.0.x:8080/ignition/bootstrap.ign
 set_proxy: false
 disconnected: false
+enable_multus:false
 container_registry: quay.ocp4.lab.gsslab.pek2.redhat.com:443
 ocp_release: ocp4.3.3-x86_64
 enable_ocs_storage: False
@@ -55,7 +56,9 @@ vcenter:
   password: 
   datacenter: test
   cluster: vmware-testcluster
-  vm_network: OpenShift-Network
+  vm_network_1: 'OpenShift'
+  vm_network_2: 'Satotest'
+  vm_network_3: 'VM Network'
 download:
   oc_client: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.3/openshift-client-linux-4.3.3.tar.gz"
   openshift_install: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.3/openshift-install-linux-4.3.3.tar.gz"
