@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
-metadata: 
+metadata:
  name: image-registry-storage
-spec: 
+spec:
  storageClassName: "thin"
- accessModes: 
-  - 
+ accessModes:
+  -
    ReadWriteOnce
- resources: 
-  requests: 
+ resources:
+  requests:
    storage: 10Gi

@@ -1,4 +1,5 @@
 #!/bin/bash
+
 oc delete OperatorGroup/openshift-operators-redhat -n openshift-operators-redhat
 oc delete project/openshift-operators-redhat
 oc delete project/openshift-logging
