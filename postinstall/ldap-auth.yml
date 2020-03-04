@@ -4,21 +4,21 @@ metadata:
   name: cluster
 spec:
   identityProviders:
-  - name: ldapidp 
-    mappingMethod: claim 
+  - name: ldapidp
+    mappingMethod: claim
     type: LDAP
     ldap:
       attributes:
-        id: 
+        id:
         - dn
-        email: 
+        email:
         - mail
-        name: 
+        name:
         - cn
-        preferredUsername: 
+        preferredUsername:
         - uid
       bindDN: "uid=testuser3,ou=People,dc=example,dc=com"
-      bindPassword: 
+      bindPassword:
         name: ldap-secret
-      insecure: true 
-      url: "ldap://helper.ocp4.lab.gsslab.pek2.redhat.com/ou=people,dc=example,dc=com?uid" 
+      insecure: true
+      url: "ldap://helper.ocp4.lab.gsslab.pek2.redhat.com/ou=people,dc=example,dc=com?uid"

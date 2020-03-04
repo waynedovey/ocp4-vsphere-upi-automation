@@ -8,10 +8,10 @@ spec:
     hive:
       type: "s3Compatible"
       s3Compatible:
-        bucket: "hive" 
-        endpoint: "https://s3-openshift-storage.apps.ocp4.lab.gsslab.pek2.redhat.com" 
-        secretName: "my-nooba-secret" 
-        
+        bucket: "hive"
+        endpoint: "https://s3-openshift-storage.apps.ocp4.lab.gsslab.pek2.redhat.com"
+        secretName: "my-nooba-secret"
+---
 apiVersion: v1
 kind: Secret
 metadata:

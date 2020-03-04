@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# Copy public images to the gsslab's local Quay:
 skopeo copy --all docker://registry.redhat.io/rhpam-7/rhpam74-operator:1.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/rhpam74-operator:1.0
 skopeo copy --all docker://registry.redhat.io/rhcam-1-1/openshift-migration-controller-rhel8@sha256:cbdd2cdc2c050bb62c713004497e57bfb9c4f7575dd1ec38e69f41689575d365 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-migration-controller-rhel8
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-logging-kibana5@sha256:062d506d9f767f91fbcfdf16fbe7d026aa7aa9f0add2a73a25778329d40ae8f7 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-logging-kibana5
@@ -66,7 +68,7 @@ skopeo copy --all docker://registry.redhat.io/openshift4/ose-sriov-network-confi
 skopeo copy --all docker://registry.redhat.io/container-native-virtualization/hyperconverged-cluster-operator:v2.2.0-12 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/container-native-virtualization/hyperconverged-cluster-operator:v2.2.0-12
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-sriov-network-webhook@sha256:d2b475a9927e1c8f1083b0b915a67db00eafd896efa7ba18097cc05f11c1d632 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-sriov-network-webhook
 skopeo copy --all docker://registry.redhat.io/amq7/amq-online-1-api-server:1.2 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amq7/amq-online-1-api-server:1.2
-registry.access.redhat.com/amq7/amq-streams-cluster-operator:1.1.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amq7/amq-streams-cluster-operator:1.1.0
+skopeo copy --all docker://registry.access.redhat.com/amq7/amq-streams-cluster-operator:1.1.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amq7/amq-streams-cluster-operator:1.1.0
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-local-storage-static-provisioner@sha256:a30a90d11855b2b35fa65020b2eb3e3584f5caf3ef3f72deddf27e86ac2060e5 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-local-storage-static-provisioner
 skopeo copy --all docker://registry.redhat.io/amq7/amq-online-1-address-space-controller:1.2 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amq7/amq-online-1-address-space-controller:1.2
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-ansible-service-broker@sha256:26292c4ee9caa49f49b57fd51bc2959b2583a6d8d93ee96ded39c06d540cc395 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-ansible-service-broker
@@ -92,7 +94,7 @@ skopeo copy --all docker://registry.redhat.io/codeready-workspaces/server-operat
 skopeo copy --all docker://registry.redhat.io/rhcam-1-0/openshift-migration-velero-restic-restore-helper-rhel8@sha256:0ec6d5e6f3446490d7cb54a2443c2869936fc7650e19740e4b10aed71ff4f863 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/rhcam-1-0/openshift-migration-velero-restic-restore-helper-rhel8
 skopeo copy --all docker://registry.redhat.io/container-native-virtualization/kubevirt-ssp-operator:v2.1.0-22 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/container-native-virtualization/kubevirt-ssp-operator:v2.1.0-22
 skopeo copy --all docker://registry.redhat.io/container-native-virtualization/kubevirt-kvm-info-nfd-plugin:v2.2.0-3 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/container-native-virtualization/kubevirt-kvm-info-nfd-plugin:v2.2.0-3
-quay.io/openshift-knative/knative-serving-operator:v0.7.1-TP1-04 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-knative/knative-serving-operator:v0.7.1-TP1-04
+skopeo copy --all docker://quay.io/openshift-knative/knative-serving-operator:v0.7.1-TP1-04 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-knative/knative-serving-operator:v0.7.1-TP1-04
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-sriov-network-device-plugin@sha256:7f8f2e9ec9cfafd3625d921d99da5c6b7b2f9c40091cbb3d050c4f12b1e2c0e1 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-sriov-network-device-plugin
 skopeo copy --all docker://registry.redhat.io/amq7/amq-broker-rhel7-operator:0.9 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amq7/amq-broker-rhel7-operator:0.9
 skopeo copy --all docker://registry.redhat.io/amq7/amq-streams-operator:1.2.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amq7/amq-streams-operator:1.2.0
@@ -166,7 +168,7 @@ skopeo copy --all docker://registry.redhat.io/amq7/amq-streams-operator:1.3.0 do
 skopeo copy --all docker://registry.redhat.io/jboss-eap-7/eap73-rhel8-operator:1.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/jboss-eap-7/eap73-rhel8-operator:1.0
 skopeo copy --all docker://registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.0.7 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-service-mesh/kiali-rhel7-operator:1.0.7
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-template-service-broker@sha256:56a99fefeb2ff3fcab12d158903693eca0eb4c0fa787978e90407651ce28a722 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-template-service-broker
-registry.access.redhat.com/amqstreams-1/amqstreams10-clusteroperator-openshift:1.0.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amqstreams-1/amqstreams10-clusteroperator-openshift:1.0.0
+skopeo copy --all docker://registry.access.redhat.com/amqstreams-1/amqstreams10-clusteroperator-openshift:1.0.0 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/amqstreams-1/amqstreams10-clusteroperator-openshift:1.0.0
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-logging-fluentd@sha256:ff766b72dea62387e3f4459db61ff3ebe27da543b7a3cebc18332186f3414120 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-logging-fluentd
 skopeo copy --all docker://registry.redhat.io/fuse7-tech-preview/dv-rhel7-operator:1.5 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/fuse7-tech-preview/dv-rhel7-operator:1.5
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-metering-hadoop@sha256:0eaa0973a1e9ecdc5d96907b10e34ed34fb2845764a39390df79bd3a8be47955 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-metering-hadoop
@@ -184,7 +186,7 @@ skopeo copy --all docker://registry.redhat.io/rhcam-1-1/openshift-migration-vele
 skopeo copy --all docker://registry.redhat.io/openshift-serverless-1-tech-preview/ingress-rhel8-operator:0.0.13-1 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-serverless-1-tech-preview/ingress-rhel8-operator:0.0.13-1
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-local-storage-static-provisioner@sha256:0834759af4c95111fde2364950358ec8255989e34bee009fac29d65dd2558b4e docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-local-storage-static-provisioner
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-metering-presto@sha256:5e96e6f0845792cb2778198efb5e1fe94e19a2cbc17d9428a8a033b23c0df4ad docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-metering-presto
-quay.io/openshift-knative/knative-openshift-ingress:v0.0.7 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-knative/knative-openshift-ingress:v0.0.7
+skopeo copy --all docker://quay.io/openshift-knative/knative-openshift-ingress:v0.0.7 docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-knative/knative-openshift-ingress:v0.0.7
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-sriov-network-device-plugin@sha256:8a487e52092c0da19d681b07c071238d79d0f30b45435f64feb626b6f4bc172b docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-sriov-network-device-plugin
 skopeo copy --all docker://registry.redhat.io/openshift-serverless-1-tech-preview/serving-networking-istio-rhel8@sha256:4e19f90b1aea1b7f4ba04f5d6b659f33a27904b37ca3f500e4aa982a9730b48b docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/openshift-serverless-1-tech-preview/serving-networking-istio-rhel8
 skopeo copy --all docker://registry.redhat.io/openshift4/ose-logging-curator5@sha256:bc3c88c77571a2eec431ccc958888d9bb398769c2961ed6cb7e026e5f37a351d docker://quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-logging-curator5
