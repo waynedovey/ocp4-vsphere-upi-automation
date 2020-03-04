@@ -1,7 +1,8 @@
 #!/bin/bash
-export KUBECONFIG=/root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
-# Get Cluster Status
 
+export KUBECONFIG=/root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+
+# Get Cluster Status
 for i in {1..10}
 do
   clusterstatus=$(oc get co | awk '{print $3}' | grep -v AVAILABLE | grep True| wc -l);
@@ -14,13 +15,12 @@ do
   fi
 done
 
-# User Auth
+# Create local user authentication (htpasswd from httpd-tools YUM package):
 rm -fr postinstall/users.htpasswd
-htpasswd -c -B -b postinstall/users.htpasswd admin redhat 
-htpasswd -B -b postinstall/users.htpasswd wdovey redhat 
-
+htpasswd -c -B -b postinstall/users.htpasswd admin redhat
+htpasswd -B -b postinstall/users.htpasswd wdovey redhat
+htpasswd -B -b postinstall/users.htpasswd lmaly redhat
 oc create secret generic htpass-secret --from-file=htpasswd=./postinstall/users.htpasswd -n openshift-config
-
 oc apply -f ./postinstall/HTPasswd.yml
 oc adm policy add-cluster-role-to-user cluster-admin admin
 
@@ -76,13 +76,13 @@ do
   fi
 done
 
-# Enable OCS Service 
+# Enable OCS Service
 # Label Storage Nodes
-for I in `oc get nodes | grep storage | awk '{print $1}'`; 
+for I in `oc get nodes | grep storage | awk '{print $1}'`;
   do oc label nodes $I cluster.ocs.openshift.io/openshift-storage='' --overwrite;
 done
 # Dedicated Storage Nodes
-for I in `oc get nodes | grep storage | awk '{print $1}'`; 
+for I in `oc get nodes | grep storage | awk '{print $1}'`;
   do oc adm taint nodes $I node.ocs.openshift.io/storage=true:NoSchedule --overwrite;
 done
 
@@ -126,7 +126,7 @@ do
     sleep 30;
   fi
 done
-# TBD automate cluster storage 
+# TBD automate cluster storage
 oc patch storageclass thin -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
 oc patch storageclass ocs-storagecluster-cephfs -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
 
@@ -149,7 +149,7 @@ oc patch proxy/cluster \
 oc create secret tls apps.ocp4.lab.gsslab.pek2.redhat.com \
      --cert=certs/apps.ocp4.lab.gsslab.pek2.redhat.com.pem  \
      --key=certs/apps.ocp4.lab.gsslab.pek2.redhat.com.key \
-     -n openshift-ingress    
+     -n openshift-ingress
 
 oc patch ingresscontroller.operator default \
      --type=merge -p \
@@ -165,11 +165,11 @@ oc create secret tls api.ocp4.lab.gsslab.pek2.redhat.com \
 oc patch apiserver cluster \
      --type=merge -p \
      '{"spec":{"servingCerts": {"namedCertificates":
-     [{"names": ["api.ocp4.lab.gsslab.pek2.redhat.com"], 
-     "servingCertificate": {"name": "api.ocp4.lab.gsslab.pek2.redhat.com"}}]}}}' 
+     [{"names": ["api.ocp4.lab.gsslab.pek2.redhat.com"],
+     "servingCertificate": {"name": "api.ocp4.lab.gsslab.pek2.redhat.com"}}]}}}'
 
 
-# Monitoring Install 
+# Monitoring Install
 oc create -f postinstall/cluster-monitoring-config.yml
 
 # Logging Install

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cleanup:
-rm -fr redhat-operators-manifests
+rm -fr redhat-operators-manifests postinstall/catalogsource.yaml
 
 # Exports - required environment variables:
 export OCP_RELEASE=4.3.5-x86_64
@@ -18,10 +18,10 @@ docker login -u="openshift+openshift" -p="P276A6HFEGCN3D8857C3TSXQQWRI0P047H1TYC
 # Mirror the repository:
 # This command pulls the release information as a digest, and its output includes the imageContentSources data that you require when you install your cluster.
 oc adm -a ${LOCAL_SECRET_JSON} release mirror \
-    --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE} \
-    --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
-    --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE} \
-    --insecure=true
+  --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE} \
+  --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
+  --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE} \
+  --insecure=true
 
 # Example:
 # imageContentSources:
@@ -32,18 +32,18 @@ oc adm -a ${LOCAL_SECRET_JSON} release mirror \
 #  - quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ocp4.3.5-x86_64
 #  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 
-# Operator Lifecycle Manager (OLM):
+# Create Operator Lifecycle Manager (OLM):
 oc adm catalog build \
-   --appregistry-endpoint https://quay.io/cnr \
-   --appregistry-org redhat-operators \
-   --to=${LOCAL_REGISTRY}/openshift/redhat-operators:v1
+  --appregistry-endpoint https://quay.io/cnr \
+  --appregistry-org redhat-operators \
+  --to=${LOCAL_REGISTRY}/openshift/redhat-operators:v1
 
 oc patch OperatorHub cluster --type json \
-    -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+  -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
 
 oc adm catalog mirror \
-   ${LOCAL_REGISTRY}/openshift/redhat-operators:v1 \
-   ${LOCAL_REGISTRY}/openshift
+  ${LOCAL_REGISTRY}/openshift/redhat-operators:v1 \
+  ${LOCAL_REGISTRY}/openshift
 
 oc apply -f ./redhat-operators-manifests
 
@@ -62,16 +62,18 @@ EOF
 
 oc create -f postinstall/catalogsource.yaml
 
-# Custom RESOURCES
+# Create custom resources:
 rm -fr olm-4.3
 postinstall/get-operator-package.sh
 cd olm-4.3/manifests/redhat-operators/cluster-logging/cluster-logging-*
 
-# replace
+# Replace the default registry with the Quay local registry:
 sed -i 's|registry.redhat.io/openshift4|quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift|' */cluster-logging*.clusterserviceversion.yaml
-## remove `replaces` line as we only have one version
+
+# Remove `replaces` line as we only have one version:
 sed -i '/replaces/'d */cluster-logging*.clusterserviceversion.yaml
-# check
+
+# Check if it was correct:
 cat */cluster-logging*.clusterserviceversion.yaml | grep quay.ocp4.lab.gsslab.pek2.redhat.com
 
 oc image mirror registry.redhat.io/openshift4/ose-cluster-logging-operator quay.ocp4.lab.gsslab.pek2.redhat.com:443/openshift/ose-cluster-logging-operator
