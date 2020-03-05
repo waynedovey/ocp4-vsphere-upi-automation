@@ -1,5 +1,6 @@
 ---
 - hosts: localhost
+
   vars:
     bootstrapContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64') }}"
     masterContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64') }}"
@@ -8,18 +9,27 @@
     folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
     datastore: "{{ vcenter.datastore }}"
     govc_file: "/usr/local/bin/govc"
+
   tasks:
-    - name: "Bootstrap base64"
+    - name: VMSETUP 1.0 | "Bootstrap base64"
       debug:
         msg: "{{ bootstrapContent }}"
-    - name: "Master base64"
+      tags:
+        - ""
+
+    - name: VMSETUP 1.1 | "Master base64"
       debug:
         msg: "{{ masterContent }}"
-    - name: "Worker base64 "
+      tags:
+        - ""
+
+    - name: VMSETUP 1.2 | "Worker base64 "
       debug:
         msg: "{{ workerContent }}"
+      tags:
+        - ""
 
-    - name: Create bootstrap VM from the template
+    - name: VMSETUP 2.0 | Create bootstrap VM from the template
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -53,8 +63,10 @@
             value: "UTC"
           - key: hwclockUTC
             value: "TRUE"
+      tags:
+        - ""
 
-    - name: Create master VMs from ther template
+    - name: VMSETUP 2.1 | Create master VMs from ther template
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -92,8 +104,10 @@
         - { name : "master0", template: "{{ templateName }}" }
         - { name : "master1", template: "{{ templateName }}" }
         - { name : "master2", template: "{{ templateName }}" }
+      tags:
+        - ""
 
-    - name: Create worker VMs from the template
+    - name: VMSETUP 2.2 | Create worker VMs from the template
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -132,8 +146,10 @@
         - { name : "worker1", template: "{{ templateName }}" }
         - { name : "worker2", template: "{{ templateName }}" }
       when: enable_multus|bool == False
+      tags:
+        - ""
 
-    - name: Create worker VMs from the template using Multus
+    - name: VMSETUP 2.3 | Create worker VMs from the template using Multus
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -174,8 +190,10 @@
         - { name : "worker1", template: "{{ templateName }}" }
         - { name : "worker2", template: "{{ templateName }}" }
       when: enable_multus|bool == True
+      tags:
+        - ""
 
-    - name: Create Storage VMs from the template
+    - name: VMSETUP 2.4 | Create Storage VMs from the template
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -214,8 +232,10 @@
         - { name : "storage1", template: "{{ templateName }}" }
         - { name : "storage2", template: "{{ templateName }}" }
       when: enable_ocs_storage|bool == True
+      tags:
+        - ""
 
-    - name: Update Mac Address Core Cluster
+    - name: VMSETUP 3.0 | Update Mac Address Core Cluster
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
@@ -239,8 +259,10 @@
       delay: 3
       register: result
       until: result.rc == 0
+      tags:
+        - ""
 
-    - name: Update Mac Address Store Nodes
+    - name: VMSETUP 3.1 | Update Mac Address Store Nodes
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
@@ -261,8 +283,10 @@
       register: result
       until: result.rc == 0
       when: enable_ocs_storage|bool == True
+      tags:
+        - ""
 
-    - name: Update CPU latencySensitivity Core Cluster
+    - name: VMSETUP 4.0 | Update CPU latencySensitivity Core Cluster
       command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
@@ -286,8 +310,10 @@
       delay: 3
       register: result
       until: result.rc == 0
+      tags:
+        - ""
 
-    - name: Update CPU latencySensitivity Core Cluster
+    - name: VMSETUP 4.1 | Update CPU latencySensitivity Core Cluster
       command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
@@ -308,8 +334,10 @@
       register: result
       until: result.rc == 0
       when: enable_ocs_storage|bool == True
+      tags:
+        - ""
 
-    - name: Start all Core Cluster VM's
+    - name: VMSETUP 5.0 | Start all Core Cluster VM's
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -327,8 +355,10 @@
         - { name : "worker0" }
         - { name : "worker1" }
         - { name : "worker2" }
+      tags:
+        - ""
 
-    - name: Start all Storage Cluster VM's
+    - name: VMSETUP 5.1 | Start all Storage Cluster VM's
       vmware_guest:
           hostname: "{{ vcenter.ip }}"
           username: "{{ vcenter.username }}"
@@ -343,4 +373,5 @@
         - { name : "storage1" }
         - { name : "storage2" }
       when: enable_ocs_storage|bool == True
-...
+      tags:
+        - ""
