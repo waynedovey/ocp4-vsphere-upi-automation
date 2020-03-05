@@ -130,148 +130,254 @@
     tags:
       - "5"
 
-  # TODO Create Base64 Template 99_masters-chrony-configuration.yml
-
-  # TODO STATUS oc describe co authentication | grep  -i PROGRESSING  -b1 | grep Status | awk '{print $3}'
-
-  - name: Configure Chrony for Masters
+  - name: POSTINSTALL 6.0 | Create Chrony configuration for masters
     k8s:
       state: present
       apply: "yes"
-      src: "./postinstall/99_masters-chrony-configuration.yml"
+      definition:
+        apiVersion: machineconfiguration.openshift.io/v1
+        kind: MachineConfig
+        metadata:
+          labels:
+            machineconfiguration.openshift.io/role: master
+          name: masters-chrony-configuration
+        spec:
+          config:
+            ignition:
+              config: {}
+              security:
+                tls: {}
+              timeouts: {}
+              version: 2.2.0
+            networkd: {}
+            passwd: {}
+            storage:
+              files:
+              - contents:
+                  source: data:text/plain;charset=utf-8;base64,"{{ lookup('file', 'templates/chrony.conf.j2') | string | b64encode }}"
+                  verification: {}
+                filesystem: root
+                mode: 420
+                path: /etc/chrony.conf
+          osImageURL: ""
+    tags:
+      - "6"
 
-# TODO Create Base64 Template 99_masters-chrony-configuration.yml
+  # - name: POSTINSTALL 6.1 | Get status of Authentication
+  #   shell: "oc describe authentication | grep -i PROGRESSING -b1 | grep Status | awk '{print $3}'"
+  #   async: 45
+  #   poll: 5
+  #   tags:
+  #     - "6"
 
-# TODO STATUS describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}'
-
-  - name: Configure Chrony for Workers
+  - name: POSTINSTALL 7.0 | Create Chrony configuration for workers
     k8s:
       state: present
       apply: "yes"
-      src: "./postinstall/99_workers-chrony-configuration.yml"
+      definition:
+        apiVersion: machineconfiguration.openshift.io/v1
+        kind: MachineConfig
+        metadata:
+          labels:
+            machineconfiguration.openshift.io/role: worker
+          name: workers-chrony-configuration
+        spec:
+          config:
+            ignition:
+              config: {}
+              security:
+                tls: {}
+              timeouts: {}
+              version: 2.2.0
+            networkd: {}
+            passwd: {}
+            storage:
+              files:
+              - contents:
+                  source: data:text/plain;charset=utf-8;base64,"{{ lookup('file', 'templates/chrony.conf.j2') | string | b64encode }}"
+                  verification: {}
+                filesystem: root
+                mode: 420
+                path: /etc/chrony.conf
+          osImageURL: ""
+    tags:
+      - "7"
+
+  # - name: POSTINSTALL 7.1 | Get status of MachineConfigPool
+  #   shell: "oc describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}'"
+  #   async: 45
+  #   poll: 5
+  #   tags:
+  #     - "7"
 
 # TODO Figure out how to declare storage nodes
 
-  - name: Label and Taint Storage Nodes
+  - name: POSTINSTALL 8.0 | Label and Taint Storage Nodes
     command: "{{ item }}"
     register: result
     loop:
         - "oc label nodes {{ storagenodes }} cluster.ocs.openshift.io/openshift-storage='' --overwrite"
         - "oc adm taint nodes {{ storagenodes }} node.ocs.openshift.io/storage=true:NoSchedule --overwrite"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "8"
 
-  - name: rain and uncordon Storage Nodes
+  - name: POSTINSTALL 9.0 | Drain and uncordon Storage Nodes
     command: "{{ item }}"
     register: result
     loop:
         - "oc adm drain {{ storagenodes }} --ignore-daemonsets --delete-local-data"
         - "oc adm uncordon {{ storagenodes }}"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "9"
 
-  - name: Create Storage Namespace
+  - name: POSTINSTALL 10.0 | Create Storage Namespace
     k8s:
       state: present
       src: "./postinstall/rhocs-namespace.yml"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
 
-  - name: Create Storage Operator Group
+  - name: POSTINSTALL 10.1 | Create Storage Operator Group
     k8s:
       state: present
       src: "./postinstall/rhocs-operatorgroup.yml"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
 
-  - name: Create the Storage OLM
+  - name: POSTINSTALL 10.2 | Create the Storage OLM
     k8s:
       state: present
       apply: "yes"
       src: "./postinstall/ocs-olm.yml"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
 
-# TODO STATUS oc get csv | grep ocs-operator | awk '{print $6}'
+  # - name: POSTINSTALL 10.3 | Get status of Red Hat OpenShift Container Storage (OCS) operator
+  #   shell: "oc get csv | grep ocs-operator | awk '{print $6}'"
+  #   async: 45
+  #   poll: 5
+  #   tags:
+  #     - "10"
 
-  - name: Create the Storage Cluster
+  - name: POSTINSTALL 10.4 | Create the Storage Cluster
     k8s:
       state: present
       apply: "yes"
       src: "./postinstall/ocs-StorageCluster.yml"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
 
-# TODO STATUS oc get csv | grep ocs-operator | awk '{print $6}'
 # TODO Figure out the escape sequence
 
-  - name: Patch the Storage cluster
+  - name: POSTINSTALL 10.5 | Patch the Storage cluster
     command: "{{ item }}"
     register: result
     loop:
         - "oc patch storageclass thin -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"false\"}}}'"
         - "oc patch storageclass ocs-storagecluster-cephfs -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"true\"}}}'"
     when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
 
-  - name: Change registry Operator to "Managed"
+  - name: POSTINSTALL 11.0 | Change registry Operator to "Managed"
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"managementState\": \"Managed\"}}' -n openshift-image-registry"
     register: result
+    tags:
+      - "11"
 
-  - name: Enable Registry PVC
+  - name: POSTINSTALL 12.0 | Enable Registry PVC
     k8s:
       state: present
       apply: "yes"
       namespace: "openshift-image-registry"
       src: "./postinstall/ocs4registry-pvc.yml"
+    tags:
+      - "12"
 
-  - name: Change registry Operator to "Managed"
+  - name: POSTINSTALL 13.0 | Change registry Operator to "Managed"
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
     register: result
+    tags:
+      - "13"
 
-  - name: Create App Cert Configmap
+  - name: POSTINSTALL 14.0 | Create App Cert Configmap
     command: "oc create configmap custom-ca --from-file=ca-bundle.crt=certs/{{ oc_app_domain }}.pem -n openshift-config"
     register: result
+    tags:
+      - "14"
 
-  - name: Update the CA Cert with the Custom CA
+  - name: POSTINSTALL 15.0 | Update the CA Cert with the Custom CA
     command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
     register: result
+    tags:
+      - "15"
 
-  - name: Create the Certificate Secret
+  - name: POSTINSTALL 16.0 | Create the Certificate Secret
     command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
     register: result
+    tags:
+      - "16"
 
-  - name: Create the Certificate Secret
+  - name: POSTINSTALL 17.0 | Create the Certificate Secret
     command: "oc create secret tls {{ oc_app_domain }}.com  --cert=certs/{{ oc_app_domain }}.pem --key=certs/{{ oc_app_domain }}.key -n openshift-ingress"
     register: result
+    tags:
+      - "17"
 
-  - name: Enable the Certificate on Ingresscontroller
+  - name: POSTINSTALL 18.0 | Enable the Certificate on Ingresscontroller
     command: "oc patch ingresscontroller.operator default --type=merge -p '{\"spec\":{\"defaultCertificate\": {\"name\": \"{{ oc_app_domain }}\"}}}' -n openshift-ingress-operator"
     register: result
+    tags:
+      - "18"
 
-  - name: Create the API Certificate
+  - name: POSTINSTALL 19.0 | Create the API Certificate
     command: "oc create secret tls {{ oc_api_domain }} --cert=certs/{{ oc_api_domain }}.pem --key=certs/{{ oc_api_domain }}.key -n openshift-config"
     register: result
+    tags:
+      - "19"
 
-  - name: Enable the API Certificate
+  - name: POSTINSTALL 20.0 | Enable the API Certificate
     command: "oc patch apiserver cluster --type=merge -p '{\"spec\":{\"servingCerts\": {\"namedCertificates\": [{\"names\": [\"{{ oc_api_domain }}\"], \"servingCertificate\": {\"name\": \"{{ oc_api_domain }}\"}}]}}}'"
     register: result
+    tags:
+      - "20"
 
-  - name: Enable Monitoring Persistent Storage
+  - name: POSTINSTALL 21.0 | Enable Monitoring Persistent Storage
     k8s:
       state: present
       apply: "yes"
       src: "./postinstall/cluster-monitoring-config.yml"
+    tags:
+      - "21"
 
-  - name: Enable Cluster Logging
+  - name: POSTINSTALL 22.0 | Enable Cluster Logging
     command: "{{ item }}"
     register: result
     loop:
-        - "oc create -f ./postinstall/logging/eo-namespace.yml"
-        - "oc create -f ./postinstall/logging/clo-namespace.yml"
-        - "oc create -f ./postinstall/logging/eo-og.yml"
-        - "oc create -f ./postinstall/logging/eo-sub.yml"
-        - "oc create -f ./postinstall/logging/eo-rbac.yml -n openshift-operators-redhat"
-        - "oc create -f ./postinstall/logging/cluster-logging-og.yml -n openshift-logging"
-        - "oc create -f ./postinstall/logging/cluster-logging-olm.yml -n openshift-logging"
+      - "oc create -f ./postinstall/logging/eo-namespace.yml"
+      - "oc create -f ./postinstall/logging/clo-namespace.yml"
+      - "oc create -f ./postinstall/logging/eo-og.yml"
+      - "oc create -f ./postinstall/logging/eo-sub.yml"
+      - "oc create -f ./postinstall/logging/eo-rbac.yml -n openshift-operators-redhat"
+      - "oc create -f ./postinstall/logging/cluster-logging-og.yml -n openshift-logging"
+      - "oc create -f ./postinstall/logging/cluster-logging-olm.yml -n openshift-logging"
+    tags:
+      - "22"
 
-  - name: Wait for Cluster CR to appear
+  - name: POSTINSTALL 23.0 | Wait for Cluster CR to appear
     command: "sleep 30"
     register: result
+    tags:
+      - "23"
 
-  - name: Create the CRD Logging
+  - name: POSTINSTALL 24.0 | Create the CRD Logging
     command: "oc create -f ./postinstall/logging/cluster-logging-crd.yml"
     register: result
+    tags:
+      - "24"

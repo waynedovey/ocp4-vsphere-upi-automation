@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  vars: 
+  vars:
     bootstrapContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64') }}"
     masterContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64') }}"
     workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
@@ -11,13 +11,13 @@
   tasks:
     - name: "Bootstrap base64"
       debug:
-        msg: "{{ bootstrapContent }}" 
+        msg: "{{ bootstrapContent }}"
     - name: "Master base64"
       debug:
-        msg: "{{ masterContent }}" 
+        msg: "{{ masterContent }}"
     - name: "Worker base64 "
       debug:
-        msg: "{{ workerContent }}" 
+        msg: "{{ workerContent }}"
 
     - name: Create bootstrap VM from the template
       vmware_guest:
@@ -32,7 +32,7 @@
         state: poweredoff
         template: "{{ templateName }}"
         disk:
-        - size_gb: 16 
+        - size_gb: 16
           type: thin
           datastore: "{{ datastore }}"
         hardware:
@@ -41,7 +41,7 @@
           memory_reservation_lock: True
         networks:
         - name: "{{ vcenter.vm_network_1 }}"
-        wait_for_ip_address: no 
+        wait_for_ip_address: no
         customvalues:
           - key: guestinfo.ignition.config.data
             value: "{{ bootstrapContent }}"
@@ -69,7 +69,7 @@
         disk:
         - size_gb: 16
           type: thin
-          datastore: "{{ datastore }}" 
+          datastore: "{{ datastore }}"
         hardware:
           memory_mb: 16384
           num_cpus: 4
@@ -239,7 +239,7 @@
       delay: 3
       register: result
       until: result.rc == 0
-  
+
     - name: Update Mac Address Store Nodes
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
       environment:
@@ -259,7 +259,7 @@
       retries: 3
       delay: 3
       register: result
-      until: result.rc == 0    
+      until: result.rc == 0
       when: enable_ocs_storage|bool == True
 
     - name: Update CPU latencySensitivity Core Cluster
@@ -277,7 +277,7 @@
       loop:
         - { name : "bootstrap" }
         - { name : "master0" }
-        - { name : "master1" } 
+        - { name : "master1" }
         - { name : "master2" }
         - { name : "worker0" }
         - { name : "worker1" }
@@ -306,7 +306,7 @@
       retries: 3
       delay: 3
       register: result
-      until: result.rc == 0      
+      until: result.rc == 0
       when: enable_ocs_storage|bool == True
 
     - name: Start all Core Cluster VM's
@@ -341,6 +341,6 @@
       loop:
         - { name : "storage0" }
         - { name : "storage1" }
-        - { name : "storage2" }  
+        - { name : "storage2" }
       when: enable_ocs_storage|bool == True
 ...
