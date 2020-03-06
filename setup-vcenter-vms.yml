@@ -5,7 +5,6 @@
     bootstrapContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64') }}"
     masterContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64') }}"
     workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
-    templateName : rhcos-4.3.0-x86_64-vmware
     folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
     datastore: "{{ vcenter.datastore }}"
     govc_file: "/usr/local/bin/govc"

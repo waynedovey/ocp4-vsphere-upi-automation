@@ -6,6 +6,7 @@ disconnected: false
 enable_multus:false
 container_registry: quay.ocp4.lab.gsslab.pek2.redhat.com:443
 ocp_release: ocp4.3.3-x86_64
+templateName : rhcos-4.3.0-x86_64-vmware
 enable_ocs_storage: False
 config:
   baseDomain: ocp.example.com
@@ -62,6 +63,7 @@ vcenter:
 download:
   oc_client: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.3/openshift-client-linux-4.3.3.tar.gz"
   openshift_install: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.3/openshift-install-linux-4.3.3.tar.gz"
+  ova_image: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/4.3.0/rhcos-4.3.0-x86_64-vmware.ova"
 
 # Post Deployment Vars
 htpasswdpath: "./postinstall/users.htpasswd"
