@@ -14,19 +14,19 @@
       debug:
         msg: "{{ bootstrapContent }}"
       tags:
-        - ""
+        - "1"
 
     - name: VMSETUP 1.1 | "Master base64"
       debug:
         msg: "{{ masterContent }}"
       tags:
-        - ""
+        - "1"
 
     - name: VMSETUP 1.2 | "Worker base64 "
       debug:
         msg: "{{ workerContent }}"
       tags:
-        - ""
+        - "1"
 
     - name: VMSETUP 2.0 | Create bootstrap VM from the template
       vmware_guest:
@@ -63,7 +63,7 @@
           - key: hwclockUTC
             value: "TRUE"
       tags:
-        - ""
+        - "2"
 
     - name: VMSETUP 2.1 | Create master VMs from ther template
       vmware_guest:
@@ -104,9 +104,9 @@
         - { name : "master1", template: "{{ templateName }}" }
         - { name : "master2", template: "{{ templateName }}" }
       tags:
-        - ""
+        - "2"
 
-    - name: VMSETUP 2.2 | Create worker VMs from the template
+    - name: VMSETUP 2.2 | Create worker VMs from the template (not using Multus)
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -146,9 +146,9 @@
         - { name : "worker2", template: "{{ templateName }}" }
       when: enable_multus|bool == False
       tags:
-        - ""
+        - "2"
 
-    - name: VMSETUP 2.3 | Create worker VMs from the template using Multus
+    - name: VMSETUP 2.3 | Create worker VMs from the template (using Multus)
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -190,7 +190,7 @@
         - { name : "worker2", template: "{{ templateName }}" }
       when: enable_multus|bool == True
       tags:
-        - ""
+        - "2"
 
     - name: VMSETUP 2.4 | Create Storage VMs from the template
       vmware_guest:
@@ -232,7 +232,7 @@
         - { name : "storage2", template: "{{ templateName }}" }
       when: enable_ocs_storage|bool == True
       tags:
-        - ""
+        - "2"
 
     - name: VMSETUP 3.0 | Update Mac Address Core Cluster
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
@@ -259,7 +259,7 @@
       register: result
       until: result.rc == 0
       tags:
-        - ""
+        - "3"
 
     - name: VMSETUP 3.1 | Update Mac Address Store Nodes
       command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
@@ -283,7 +283,7 @@
       until: result.rc == 0
       when: enable_ocs_storage|bool == True
       tags:
-        - ""
+        - "3"
 
     - name: VMSETUP 4.0 | Update CPU latencySensitivity Core Cluster
       command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
@@ -310,7 +310,7 @@
       register: result
       until: result.rc == 0
       tags:
-        - ""
+        - "4"
 
     - name: VMSETUP 4.1 | Update CPU latencySensitivity Core Cluster
       command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
@@ -334,7 +334,7 @@
       until: result.rc == 0
       when: enable_ocs_storage|bool == True
       tags:
-        - ""
+        - "4"
 
     - name: VMSETUP 5.0 | Start all Core Cluster VM's
       vmware_guest:
@@ -355,7 +355,7 @@
         - { name : "worker1" }
         - { name : "worker2" }
       tags:
-        - ""
+        - "5"
 
     - name: VMSETUP 5.1 | Start all Storage Cluster VM's
       vmware_guest:
@@ -373,4 +373,4 @@
         - { name : "storage2" }
       when: enable_ocs_storage|bool == True
       tags:
-        - ""
+        - "5"
