@@ -204,6 +204,7 @@
       - "7"
 
   # - name: POSTINSTALL 7.1 | Get status of MachineConfigPool
+  #   # Example: Ready Machine Count: 3
   #   shell: "oc describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}'"
   #   async: 45
   #   poll: 5
