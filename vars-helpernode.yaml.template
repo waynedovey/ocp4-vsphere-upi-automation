@@ -1,0 +1,53 @@
+---
+disk: vda
+helper:
+  name: "helper"
+  ipaddr: "192.168.0.2"
+  networkifacename: "ens192"
+dns:
+  domain: "lab.gsslab.pek2.redhat.com"
+  clusterid: "ocp4"
+  forwarder1: "8.8.8.8"
+  forwarder2: "4.4.4.4"
+dhcp:
+  router: "192.168.0.2"
+  bcast: "192.168.0.255"
+  netmask: "255.255.255.0"
+  poolstart: "192.168.0.10"
+  poolend: "192.168.0.60"
+  ipid: "192.168.0.0"
+  netmaskid: "255.255.255.0"
+bootstrap:
+  name: "bootstrap"
+  ipaddr: "192.168.0.20"
+  macaddr: "00:50:56:ab:b8:01"
+masters:
+  - name: "master0"
+    ipaddr: "192.168.0.21"
+    macaddr: "00:50:56:ab:b8:02"
+  - name: "master1"
+    ipaddr: "192.168.0.22"
+    macaddr: "00:50:56:ab:b8:03"
+  - name: "master2"
+    ipaddr: "192.168.0.23"
+    macaddr: "00:50:56:ab:b8:04"
+workers:
+  - name: "worker0"
+    ipaddr: "192.168.0.11"
+    macaddr: "00:50:56:ab:b8:05"
+  - name: "worker1"
+    ipaddr: "192.168.0.12"
+    macaddr: "00:50:56:ab:b8:06"
+  - name: "worker2"
+    ipaddr: "192.168.0.13"
+    macaddr: "00:50:56:ab:b8:07"
+storage:
+  - name: "storage0"
+    ipaddr: "192.168.0.51"
+    macaddr: "00:50:56:ab:b8:08"
+  - name: "storage1"
+    ipaddr: "192.168.0.52"
+    macaddr: "00:50:56:ab:b8:09"
+  - name: "storage2"
+    ipaddr: "192.168.0.53"
+    macaddr: "00:50:56:ab:b8:10"

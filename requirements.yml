@@ -1,0 +1,5 @@
+---
+# requirements.yml
+
+- src: https://github.com/waynedovey/ocp4-upi-helpernode
+  version: master
