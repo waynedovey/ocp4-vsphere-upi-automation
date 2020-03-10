@@ -1,0 +1,6 @@
+---
+- hosts: all
+  vars_files: ./vars/vars-helpernode.yaml
+  roles:
+    - ocp4-upi-helpernode
+    - 389-ldap-server
