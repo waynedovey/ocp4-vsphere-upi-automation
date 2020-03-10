@@ -9,7 +9,7 @@ ocp_release: ocp4.3.3-x86_64
 templateName : rhcos-4.3.0-x86_64-vmware
 enable_ocs_storage: False
 config:
-  baseDomain: ocp.example.com 
+  baseDomain: ocp.example.com
   clusterName: ocp4
   bootstrapmac: 00:50:56:ab:b8:01
   master0mac: 00:50:56:ab:b8:02
@@ -24,8 +24,8 @@ config:
   proxy: ""
   no_proxy: ""
   sshKey: ssh-rsa AAAAB3Nza
-  pullSecret: 
-  CAcert: " |   
+  pullSecret:
+  CAcert: " |
   -----BEGIN CERTIFICATE-----
   MIIDyzCCArOgAwIBAgIJANPmLVdLKvgrMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNV
   BAYTAkFVMQwwCgYDVQQIDANOU1cxGzAZBgNVBAoMElJlZCBIYXQgQ29uc3VsdGlu
@@ -50,11 +50,11 @@ config:
   UiZ28o5sJ4VRdJmFWsB6
   -----END CERTIFICATE-----"
 vcenter:
-  ip: 
+  ip:
   datastore: datastore1
   defaultdatastore: datastore1
   username: administrator@vsphere.local
-  password: 
+  password:
   datacenter: test
   cluster: vmware-testcluster
   vm_network_1: 'OpenShift'

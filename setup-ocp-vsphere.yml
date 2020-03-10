@@ -1,24 +1,29 @@
 - hosts: localhost
+
   vars:
     masterContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64' )}}"
     workerContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64' )}}"
     appendBootstrapContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64' )}}"
     govc_file: "/usr/local/bin/govc"
   tasks:
- 
-  - name: VMWARE_PREP 1.0 |Create bin, install-dir and downloads folders
+
+  - name: VMWARE_PREP 1.0 | Create bin, install-dir and downloads folders
     file:
       path: "{{ playbook_dir }}/{{ item }}"
       state: directory
       mode: '0755'
-    with_items: ["bin", "downloads", "install-dir"]  
+    with_items: ["bin", "downloads", "install-dir"]
+    tags:
+      - "1"
 
-  - name: VMWARE_PREP 1.1 | Download the latest RHCOS OVA file
+  - name: VMWARE_PREP 2.0 | Download the latest RHCOS OVA file
     get_url:
       url: "{{ download.ova_image }}"
-      dest: "{{ playbook_dir }}/downloads/{{ templateName }}.ova"  
-    
-  - name: VMWARE_PREP 1.2 | Upload the latest RHCOS OVA file to VMWare
+      dest: "{{ playbook_dir }}/downloads/{{ templateName }}.ova"
+    tags:
+      - "2"
+
+  - name: VMWARE_PREP 2.1 | Upload the latest RHCOS OVA file to VMWare
     command: "{{ govc_file }} import.ova -name={{ templateName }} {{ playbook_dir }}/downloads/{{ templateName }}.ova "
     environment:
       GOVC_URL: "{{ vcenter.ip }}"
@@ -29,76 +34,96 @@
       GOVC_DATACENTER: "{{ vcenter.datacenter }}"
       GOVC_CLUSTER: "{{ vcenter.cluster }}"
       GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
-    ignore_errors: yes      
-  
-  - name: Download the oc client
-    get_url:
-      url: "{{ download.oc_client }}"
-      dest: "{{ playbook_dir }}/downloads/oc_client.tar.gz"
+    ignore_errors: yes
+    tags:
+      - "2"
 
-  - name: Download the openshift-install CLI tool
-    get_url:
-      url: "{{ download.openshift_install }}"
-      dest: "{{ playbook_dir }}/downloads/openshift_install.tar.gz"
-
-  - name: Unarchive oc client
+  - name: VMWARE_PREP 3.0 | Unarchive oc client
     unarchive:
-      src: "{{ playbook_dir }}/downloads/oc_client.tar.gz"
+      src: "{{ download.oc_client }}"
       dest: "{{ playbook_dir }}/bin"
       remote_src: yes
+    tags:
+      - "3"
 
-  - name: Unarchive openshift-install 
+  - name: VMWARE_PREP 4.0 | Unarchive openshift-install
     unarchive:
-      src: "{{ playbook_dir }}/downloads/openshift_install.tar.gz"
+      src: "{{ download.openshift_install }}"
       dest: "{{ playbook_dir }}/bin"
       remote_src: yes
+    tags:
+      - "4"
 
-  - name: Copy install-config.yaml file into install-dir
+  - name: VMWARE_PREP 5.0 | Copy install-config.yaml file into install-dir
     template:
       src: "{{ playbook_dir }}/templates/install-config.yaml.j2"
       dest: "{{ playbook_dir }}/install-dir/install-config.yaml"
+    tags:
+      - "5"
 
-  - name: Backup the install-config.yaml file 
+  - name: VMWARE_PREP 6.0 | Backup the install-config.yaml file
     copy:
       src: "{{ playbook_dir }}/install-dir/install-config.yaml"
       dest: "{{ playbook_dir }}/install-dir/install-config.yaml.orig"
+    tags:
+      - "6"
 
-  - name: Generate the ignition manifests
+  - name: VMWARE_PREP 7.0 | Generate the ignition manifests
     command: "{{ playbook_dir }}/bin/openshift-install create manifests --dir={{ playbook_dir }}/install-dir"
+    tags:
+      - "7"
 
-  - name: Apply the patch to set mastersSchedulable to false
+  - name: VMWARE_PREP 8.0 | Apply the patch to set mastersSchedulable to false
     patch:
       src: "{{ playbook_dir }}/patches/cluster-scheduler-02-config.yml.patch"
       dest: "{{ playbook_dir }}/install-dir/manifests/cluster-scheduler-02-config.yml"
+    tags:
+      - "8"
 
-  - name: Generate the ignition configs
+  - name: VMWARE_PREP 9.0 | Generate the ignition configs
     command: "{{ playbook_dir }}/bin/openshift-install create ignition-configs --dir={{ playbook_dir }}/install-dir"
+    tags:
+      - "9"
 
-  - name: Copy append-bootstrap.ign file into install-dir
-    template: 
+  - name: VMWARE_PREP 10.0 | Copy append-bootstrap.ign file into install-dir
+    template:
       src: "{{ playbook_dir }}/templates/append-bootstrap.ign.j2"
       dest: "{{ playbook_dir }}/install-dir/append-bootstrap.ign"
+    tags:
+      - "10"
 
-  - name: Get base64 version of append-bootstrap.ign
+  - name: VMWARE_PREP 11.0 | Get base64 version of append-bootstrap.ign
     shell: "base64 -w0 {{ playbook_dir }}/install-dir/append-bootstrap.ign > {{ playbook_dir }}/install-dir/append-bootstrap.64"
+    tags:
+      - "11"
 
-  - name: Get base64 version of master.ign
+  - name: VMWARE_PREP 11.1 | Get base64 version of master.ign
     shell: "base64 -w0 {{ playbook_dir }}/install-dir/master.ign > {{ playbook_dir }}/install-dir/master.64"
+    tags:
+      - "11"
 
-  - name: Get base64 version of worker.ign
+  - name: VMWARE_PREP 11.2 | Get base64 version of worker.ign
     shell: "base64 -w0 {{ playbook_dir }}/install-dir/worker.ign > {{ playbook_dir }}/install-dir/worker.64"
+    tags:
+      - "11"
 
-  - name:
-    template: 
+  - name: VMWARE_PREP 12.0 | Get master VM parameters
+    template:
       src: "{{ playbook_dir }}/templates/master-vm-param.j2"
       dest: "{{ playbook_dir }}/install-dir/master-vm-param.txt"
+    tags:
+      - "12"
 
-  - name:
-    template: 
+  - name: VMWARE_PREP 12.1 | Get worker VM parameters
+    template:
       src: "{{ playbook_dir }}/templates/worker-vm-param.j2"
       dest: "{{ playbook_dir }}/install-dir/worker-vm-param.txt"
+    tags:
+      - "12"
 
-  - name:
-    template: 
+  - name: VMWARE_PREP 13.0 | Get the append parameters
+    template:
       src: "{{ playbook_dir }}/templates/append-bootstrap-vm-param.j2"
       dest: "{{ playbook_dir }}/install-dir/append-bootstrap-vm-param.txt"
+    tags:
+      - "13"
