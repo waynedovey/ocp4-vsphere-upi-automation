@@ -15,6 +15,7 @@
     oc_admin_role: "cluster-admin"
     oc_app_domain: "apps.ocp4.lab.gsslab.pek2.redhat.com"
     oc_api_domain: "api.ocp4.lab.gsslab.pek2.redhat.com"
+    # enable_ocs_storage: False
 
   environment:
     # KUBECONFIG: ./kubeconfig
@@ -52,14 +53,15 @@
 
   - name: POSTINSTALL 2.1 | Create HTPasswd Secret
     command: oc create secret generic htpass-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
-    ignore_errors: yes
+    failed_when: "'AlreadyExists' not in result.stderr"
+    register: result
     tags:
       - "2"
 
   - name: POSTINSTALL 2.2 | Enable the HTPasswd User
     k8s:
       state: present
-      # apply: "yes"
+      # apply: "yes"  # only works with Ansible 2.9 and higher
       definition:
         apiVersion: config.openshift.io/v1
         kind: OAuth
@@ -86,7 +88,7 @@
   - name: POSTINSTALL 3.1 | Enable the LDAP User
     k8s:
       state: present
-      # apply: "yes"
+      # apply: "yes"  # only works with Ansible 2.9 and higher
       definition:
         apiVersion: config.openshift.io/v1
         kind: OAuth
@@ -133,7 +135,7 @@
   - name: POSTINSTALL 6.0 | Create Chrony configuration for masters
     k8s:
       state: present
-      apply: "yes"
+      # apply: "yes"  # only works with Ansible 2.9 and higher
       definition:
         apiVersion: machineconfiguration.openshift.io/v1
         kind: MachineConfig
@@ -173,7 +175,7 @@
   - name: POSTINSTALL 7.0 | Create Chrony configuration for workers
     k8s:
       state: present
-      apply: "yes"
+      # apply: "yes"  # only works with Ansible 2.9 and higher
       definition:
         apiVersion: machineconfiguration.openshift.io/v1
         kind: MachineConfig
@@ -295,7 +297,7 @@
   - name: POSTINSTALL 12.0 | Enable Registry PVC
     k8s:
       state: present
-      apply: "yes"
+      # apply: "yes"  # only works with Ansible 2.9 and higher
       namespace: "openshift-image-registry"
       src: "./postinstall/ocs4registry-pvc.yml"
     tags:
@@ -309,6 +311,7 @@
 
   - name: POSTINSTALL 14.0 | Create App Cert Configmap
     command: "oc create configmap custom-ca --from-file=ca-bundle.crt=certs/{{ oc_app_domain }}.pem -n openshift-config"
+    failed_when: "'AlreadyExists' not in result.stderr"
     register: result
     tags:
       - "14"
@@ -327,6 +330,7 @@
 
   - name: POSTINSTALL 17.0 | Create the Certificate Secret
     command: "oc create secret tls {{ oc_app_domain }}.com  --cert=certs/{{ oc_app_domain }}.pem --key=certs/{{ oc_app_domain }}.key -n openshift-ingress"
+    failed_when: "'AlreadyExists' not in result.stderr"
     register: result
     tags:
       - "17"
@@ -352,7 +356,8 @@
   - name: POSTINSTALL 21.0 | Enable Monitoring Persistent Storage
     k8s:
       state: present
-      apply: "yes"
+      namespace: openshift-monitoring
+      # apply: "yes"  # only works with Ansible 2.9 and higher
       src: "./postinstall/cluster-monitoring-config.yml"
     tags:
       - "21"

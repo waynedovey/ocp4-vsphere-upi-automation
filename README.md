@@ -1,54 +1,62 @@
 # OCP4 on VMware vSphere UPI Automation
 
-The goal of this repo is to make deploying and redeploying a new Openshift v4 cluster a snap. The document looks long but after you have used it till the end once, you will appreciate how quickly VMs come up in vCenter for you to start working with. 
+The goal of this repo is to make deploying and redeploying a new Openshift v4 cluster a snap. The document looks long but after you have used it till the end once, you will appreciate how quickly VMs come up in vCenter for you to start working with.
 
-   
-### Setup and Installation
+## Setup and Installation
 
-With all the details in hand from the prerequisites, populate the **vars.yml** in the root folder of this repo and trigger the installation with the following command 
+With all the details in hand from the prerequisites, populate the **vars.yml** in the root folder of this repo and trigger the installation with the following command
 
-```sh 
+```bash
 # Make sure to run this command in the root folder of the repo
-ansible-playbook -e @vars.yml setup-ocp-vsphere.yml --ask-vault-pass
+ansible-playbook -e @./vars/vars-{CUSTOMER}.yml setup-ocp-vsphere.yml --ask-vault-pass
 ```
-## Copy the bootstrap.ign file to the webserver 
 
-```sh 
+## Requirements
+
+* Ansible `2.X`
+* Python module `openshift-0.10.3` or higher (you might have to do `alternatives --install /usr/bin/python python /usr/bin/python3 1 ; pip3 install openshift --user`)
+
+## Copy the bootstrap.ign file to the webserver
+
+```bash
 # Running from the root folder of this repo; below is just an example
 scp install-dir/bootstrap.ign root@192.168.86.180:/var/www/html/ignition
 ```
 
-### Setup and Installation
+## Examples
 
-# Automated 
+### Automated
 
-```sh
+```bash
 ./cluser-build.sh
 ```
 
-# Manual install 
+### Manual install
 
-```sh 
-ansible-playbook -e @vars.yml setup-vcenter-vms.yml --ask-vault-pass
-```
-# GSS LaB 
-```sh 
-ansible-playbook -e @vars-gsslab.yml setup-vcenter-vms.yml --ask-vault-pass
+```bash
+ansible-playbook -e @./vars/vars-{CUSTOMER}.yml setup-vcenter-vms.yml --ask-vault-pass
 ```
 
-```sh
+### GSS LaB
+
+```bash
+ansible-playbook -e @./vars/vars-{CUSTOMER}.yml setup-vcenter-vms.yml --ask-vault-pass
+```
+
+```bash
 journalctl -b -f -u bootkube.service
 ```
 
-```sh
+```bash
 export KUBECONFIG=/root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
 ```
 
-```sh
+```bash
 bin/openshift-install wait-for install-complete --dir=/root/ocp4-vsphere-upi-automation/install-dir
 ```
 
-Post Deployment Tasks 
-```sh
-ansible-playbook -e @vars-gsslab.yml post-install.yml --ask-vault-pass
+Post Deployment Tasks
+
+```bash
+ansible-playbook -e @./vars/vars-{CUSTOMER}.yml post-install.yml --ask-vault-pass
 ```
