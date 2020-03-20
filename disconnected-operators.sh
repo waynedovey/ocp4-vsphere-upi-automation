@@ -13,12 +13,12 @@ export LOCAL_SECRET_JSON='/root/.docker/config.json'
 export RELEASE_NAME="ocp-release"
 
 # Log in to gsslab's local Quay:
-docker login -u="openshift+openshift" -p="C20YC06UVOC0A95DMPXUAZ1JC10PJ5I8GYKZ4V6DCAUU8BR0EM6ZJ108F5W5RFJX" quay.ocp4.gsslab.brq.redhat.com
-docker login -u="openshift+openshift" -p="C20YC06UVOC0A95DMPXUAZ1JC10PJ5I8GYKZ4V6DCAUU8BR0EM6ZJ108F5W5RFJX" quay.ocp4.gsslab.brq.redhat.com:443
+docker login -u="openshift+openshift" -p="xxxx" quay.ocp4.gsslab.brq.redhat.com
+docker login -u="openshift+openshift" -p="xxxx" quay.ocp4.gsslab.brq.redhat.com:443
 
 # Log in to gsslab's local Quay:
-docker login -u="registry" -p="registry" registry.ocp4.gsslab.brq.redhat.com
-docker login -u="registry" -p="registry" registry.ocp4.gsslab.brq.redhat.com:443
+docker login -u="xxxx" -p="xxxx" registry.ocp4.gsslab.brq.redhat.com
+docker login -u="xxxx" -p="xxxx" registry.ocp4.gsslab.brq.redhat.com:443
 
 # Mirror the repository:
 # This command pulls the release information as a digest, and its output includes the imageContentSources data that you require when you install your cluster.
