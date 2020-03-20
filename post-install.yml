@@ -19,19 +19,20 @@
 
   environment:
     # KUBECONFIG: ./kubeconfig
+    # KUBECONFIG: /root/.kube/config
     KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
 
   tasks:
   - name: POSTINSTALL 1.0 | Get Storage Nodes
-    shell: oc get nodes | grep storage | awk '{print $1}'
-    register: result
+    shell: oc get nodes | grep storage | awk '{ print $1 }'
+    register: result1
     # register: storagenodes
     tags:
       - "1"
 
   - name: POSTINSTALL 1.1 | Set fact storagenodes
     set_fact:
-      storagenodes: "{{ result.stdout | from_yaml }}"
+      storagenodes: "{{ result1.stdout | from_yaml }}"
     tags:
       - "1"
 
@@ -53,8 +54,8 @@
 
   - name: POSTINSTALL 2.1 | Create HTPasswd Secret
     command: oc create secret generic htpass-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
-    failed_when: "'AlreadyExists' not in result.stderr"
-    register: result
+    # failed_when: "'already exists' not in result2.stderr"  # use this when run multiple times
+    register: result2
     tags:
       - "2"
 
@@ -80,8 +81,8 @@
 
   - name: POSTINSTALL 3.0 | Create LDAP Secret
     command: oc create secret generic ldap-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
-    register: result
-    ignore_errors: yes
+    # failed_when: "'already exists' not in result3.stderr"  # use this when run multiple times
+    register: result3
     tags:
       - "3"
 
@@ -127,8 +128,8 @@
 
   - name: POSTINSTALL 5.0 | Remove generic Kubeadmin User
     command: oc delete secrets kubeadmin -n kube-system
-    register: result
-    ignore_errors: yes
+    register: result5
+    # failed_when: "'NotFound' not in result5.stderr"  # use this when run multiple times
     tags:
       - "5"
 
@@ -217,7 +218,7 @@
 
   - name: POSTINSTALL 8.0 | Label and Taint Storage Nodes
     command: "{{ item }}"
-    register: result
+    register: result8
     loop:
         - "oc label nodes {{ storagenodes }} cluster.ocs.openshift.io/openshift-storage='' --overwrite"
         - "oc adm taint nodes {{ storagenodes }} node.ocs.openshift.io/storage=true:NoSchedule --overwrite"
@@ -290,7 +291,7 @@
 
   - name: POSTINSTALL 11.0 | Change registry Operator to "Managed"
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"managementState\": \"Managed\"}}' -n openshift-image-registry"
-    register: result
+    register: result11
     tags:
       - "11"
 
@@ -305,51 +306,53 @@
 
   - name: POSTINSTALL 13.0 | Change registry Operator to "Managed"
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
-    register: result
+    register: result13
     tags:
       - "13"
 
   - name: POSTINSTALL 14.0 | Create App Cert Configmap
     command: "oc create configmap custom-ca --from-file=ca-bundle.crt=certs/{{ oc_app_domain }}.pem -n openshift-config"
-    failed_when: "'AlreadyExists' not in result.stderr"
-    register: result
+    # failed_when: "'already exists' not in result14.stderr"  # use this when run multiple times
+    register: result14
     tags:
       - "14"
 
   - name: POSTINSTALL 15.0 | Update the CA Cert with the Custom CA
     command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
-    register: result
+    register: result15
     tags:
       - "15"
 
   - name: POSTINSTALL 16.0 | Create the Certificate Secret
     command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
-    register: result
+    register: result16
     tags:
       - "16"
 
   - name: POSTINSTALL 17.0 | Create the Certificate Secret
     command: "oc create secret tls {{ oc_app_domain }}.com  --cert=certs/{{ oc_app_domain }}.pem --key=certs/{{ oc_app_domain }}.key -n openshift-ingress"
-    failed_when: "'AlreadyExists' not in result.stderr"
-    register: result
+    # failed_when: "'already exists' not in result17.stderr"  # use this when run multiple times
+    register: result17
     tags:
       - "17"
 
   - name: POSTINSTALL 18.0 | Enable the Certificate on Ingresscontroller
     command: "oc patch ingresscontroller.operator default --type=merge -p '{\"spec\":{\"defaultCertificate\": {\"name\": \"{{ oc_app_domain }}\"}}}' -n openshift-ingress-operator"
-    register: result
+    register: result18
     tags:
       - "18"
 
   - name: POSTINSTALL 19.0 | Create the API Certificate
     command: "oc create secret tls {{ oc_api_domain }} --cert=certs/{{ oc_api_domain }}.pem --key=certs/{{ oc_api_domain }}.key -n openshift-config"
-    register: result
+    # failed_when: "'already exists' not in result19.stderr"  # use this when run multiple times
+    register: result19
     tags:
       - "19"
 
   - name: POSTINSTALL 20.0 | Enable the API Certificate
     command: "oc patch apiserver cluster --type=merge -p '{\"spec\":{\"servingCerts\": {\"namedCertificates\": [{\"names\": [\"{{ oc_api_domain }}\"], \"servingCertificate\": {\"name\": \"{{ oc_api_domain }}\"}}]}}}'"
-    register: result
+    # failed_when: "'no change' not in result20.stdout"  # use this when run multiple times
+    register: result20
     tags:
       - "20"
 
@@ -362,28 +365,53 @@
     tags:
       - "21"
 
-  - name: POSTINSTALL 22.0 | Enable Cluster Logging
+  - name: POSTINSTALL 22.0 | Enable Cluster Logging (One)
     command: "{{ item }}"
-    register: result
     loop:
       - "oc create -f ./postinstall/logging/eo-namespace.yml"
       - "oc create -f ./postinstall/logging/clo-namespace.yml"
       - "oc create -f ./postinstall/logging/eo-og.yml"
-      - "oc create -f ./postinstall/logging/eo-sub.yml"
       - "oc create -f ./postinstall/logging/eo-rbac.yml -n openshift-operators-redhat"
-      - "oc create -f ./postinstall/logging/cluster-logging-og.yml -n openshift-logging"
       - "oc create -f ./postinstall/logging/cluster-logging-olm.yml -n openshift-logging"
+    register: result220
+    # failed_when: "'already exists' not in result220.stderr"  # use this when run multiple times
+    tags:
+      - "22"
+
+  - name: POSTINSTALL 22.1 | Enable Cluster Logging (Two)
+    command: "{{ item }}"
+    loop:
+      - "oc create -f ./postinstall/logging/eo-sub.yml"
+      - "oc create -f ./postinstall/logging/cluster-logging-og.yml -n openshift-logging"
+    register: result221
     tags:
       - "22"
 
   - name: POSTINSTALL 23.0 | Wait for Cluster CR to appear
     command: "sleep 30"
-    register: result
+    register: result23
     tags:
       - "23"
 
-  - name: POSTINSTALL 24.0 | Create the CRD Logging
+  # - name: POSTINSTALL 24.0 | Install the Cluster Logging Operator
+  #   command: "oc create -f ./postinstall/logging/clo-og.yml"
+  #   register: result240
+  #   failed_when: "'already exists' not in result240.stderr"
+  #   tags:
+  #     - "24"
+
+  # - name: POSTINSTALL 24.1 | Create a Subscription object, channel 4.3
+  #   command: "oc create -f ./postinstall/logging/clo-sub.yml"
+  #   register: result241
+  #   failed_when: "'already exists' not in result241.stderr"
+  #   tags:
+  #     - "24"
+
+    # Possible error when using this on older OCP (e.g. OCP v4.2)
+    # error: unable to recognize "postinstall/logging/cluster-logging-crd.yml": no matches for kind "ClusterLogging" in version "logging.openshift.io/v1"
+  - name: POSTINSTALL 24.2 | Create a Cluster Logging instance
     command: "oc create -f ./postinstall/logging/cluster-logging-crd.yml"
-    register: result
+    register: result242
+    failed_when: "'already exists' not in result242.stderr"
     tags:
       - "24"

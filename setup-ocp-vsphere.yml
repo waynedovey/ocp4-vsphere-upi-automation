@@ -34,6 +34,7 @@
       GOVC_DATACENTER: "{{ vcenter.datacenter }}"
       GOVC_CLUSTER: "{{ vcenter.cluster }}"
       GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      # GOVC_RESOURCE_POOL: ""
     ignore_errors: yes
     tags:
       - "2"
