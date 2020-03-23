@@ -3,5 +3,9 @@
 
 - src: https://github.com/waynedovey/ocp4-upi-helpernode
   version: master
+
 - src: https://github.com/neoncyrex/389-ldap-server
+  version: master
+
+- src: https://github.com/luckylittle/ansible-role-openshift4-cis
   version: master

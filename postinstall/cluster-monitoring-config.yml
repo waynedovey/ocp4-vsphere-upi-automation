@@ -1,5 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+namespace: openshift-monitoring
 data:
   config.yaml: |
     prometheusOperator:
@@ -46,6 +49,3 @@ data:
     k8sPrometheusAdapter:
       nodeSelector:
         node-role.kubernetes.io/worker: ""
-metadata:
-  name: cluster-monitoring-config
-namespace: openshift-monitoring
