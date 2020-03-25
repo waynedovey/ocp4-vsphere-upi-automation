@@ -123,7 +123,7 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 32768
+          memory_mb: 65536
           num_cpus: 8
           memory_reservation_lock: True
         networks:
@@ -165,7 +165,7 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 32768
+          memory_mb: 65536
           num_cpus: 8
           memory_reservation_lock: True
         networks:

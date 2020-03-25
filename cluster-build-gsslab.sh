@@ -3,8 +3,8 @@
 DEFAULT_OCPVERSION=4.3.8
 
 # Cleanup:
-#rm -fr install-dir bin downloads
-#mkdir -p {install-dir,bin,downloads}
+rm -fr install-dir bin downloads
+mkdir -p {install-dir,bin,downloads}
 
 # Set the OCP version
 
@@ -23,11 +23,11 @@ fi
 printf "* Using: ${DEFAULT_OCPVERSION}\n\n"
 
 # Run Ansible setup-ocp-vsphere playbook:
-ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION}" -e @./vars/vars-gsslab.yml setup-ocp-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml --check
+ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION}" -e @./vars/vars-gsslab.yml setup-ocp-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
 
 # Copy Ignition file to the Apache's ignition folder under DocumentRoot:
 cp install-dir/bootstrap.ign /var/www/html/ignition
 chmod 644 /var/www/html/ignition/bootstrap.ign
 
 # Run Ansible setup-vcenter-vms playbook:
-ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION}" -e @./vars/vars-gsslab.yml setup-vcenter-vms.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml --check
+ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION}" -e @./vars/vars-gsslab.yml setup-vcenter-vms.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
