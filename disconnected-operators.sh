@@ -4,10 +4,10 @@
 rm -fr redhat-operators-manifests postinstall/catalogsource.yaml
 
 # Exports - required environment variables:
-export OCP_RELEASE=4.3.5-x86_64
+export OCP_RELEASE=4.3.8-x86_64
 #export LOCAL_REGISTRY='quay.ocp4.gsslab.brq.redhat.com:443'
 export LOCAL_REGISTRY='registry.ocp4.gsslab.brq.redhat.com:443'
-export LOCAL_REPOSITORY='openshift/ocp4.3.5-x86_64'
+export LOCAL_REPOSITORY='openshift/ocp4.3.8-x86_64'
 export PRODUCT_REPO='openshift-release-dev'
 export LOCAL_SECRET_JSON='/root/.docker/config.json'
 export RELEASE_NAME="ocp-release"
