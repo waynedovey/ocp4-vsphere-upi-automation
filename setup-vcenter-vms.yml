@@ -123,8 +123,8 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 65536
-          num_cpus: 8
+          memory_mb: "{{ worker_memory }}"
+          num_cpus: "{{ worker_cpu }}"
           memory_reservation_lock: True
         networks:
         - name: "{{ vcenter.vm_network_1 }}"
@@ -165,8 +165,8 @@
           type: thin
           datastore: "{{ datastore }}"
         hardware:
-          memory_mb: 65536
-          num_cpus: 8
+          memory_mb: "{{ worker_memory }}"
+          num_cpus: "{{ worker_cpu }}"
           memory_reservation_lock: True
         networks:
         - name: "{{ vcenter.vm_network_1 }}"
