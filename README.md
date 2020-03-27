@@ -13,15 +13,29 @@ With all the details in hand from the prerequisites, populate the **vars/vars-${
 
 ## Examples Runs
 
-### Automated Build Generic
+### Automated Build with Prompted options
 
 ```bash
 ./cluster-build.sh
-```
-### Automated Build Lab
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+pek2lab
+* Cluster Name: pek2lab
 
-```bash
-./cluster-build-${BUILD_LAB}.sh
+Enter OpenShift Version: (Press ENTER for default: 4.3.8)
+4.3.9
+* Using: 4.3.9
+
+Enter OpenShift Cluster Size (small [8gb,2vcpu],medium [32gb,4vcpu],large [64gb,8vcpu]): (Press ENTER for default: small )
+medium
+* Using: medium Cluster Settings Memory 32768 CPU 4
+
+Enter OpenShift Disconnected setting true/false: (Press ENTER for default: false)
+false
+* Disconnected Setting: false
+
+Enable OpenShift Container Storage (OCS) true/false: (Press ENTER for default: false)
+true
+* OpenShift Container Storage (OCS) Setting: true
 ```
 
 ## Manual install
