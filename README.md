@@ -2,9 +2,9 @@
 
 The goal of this repo is to make deploying and redeploying a new Openshift v4 cluster fully automated. This has been created to avoid any manual operation for a VMware OpenShift UPO implementation.
 
-### Prerequisites
+## Prerequisites
 
-With all the details in hand from the prerequisites, populate the **vars.yml** in the root folder of this repo and trigger the installation seen in the example runs. 
+With all the details in hand from the prerequisites, populate the **vars/vars-${BUILD_LAB}.yml** in the root folder of this repo and trigger the installation seen in the example runs. 
 
 ## Requirements
 
@@ -24,7 +24,7 @@ With all the details in hand from the prerequisites, populate the **vars.yml** i
 ./cluster-build-${BUILD_LAB}.sh
 ```
 
-### Manual install
+## Manual install
 
 ### Prepare OCP OVA, Ignition and install configuration
 
@@ -72,7 +72,7 @@ ssh core@192.168.0.xxx
 journalctl -b -f -u bootkube.service
 ```
 
-### Post Deployment Tasks
+## Post Deployment Tasks
 
 ```bash
 ansible-playbook -e @./vars/vars-{CUSTOMER}.yml post-install.yml --ask-vault-pass
