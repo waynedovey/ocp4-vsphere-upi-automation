@@ -1,6 +1,6 @@
 # OCP4 on VMware vSphere UPI Automation
 
-The goal of this repo is to make deploying and redeploying a new Openshift v4 cluster fully automated. This has been created to avoid any manual operation for a VMware OpenShift UPO implementation.
+The goal of this repo is to make deploying and redeploying a new Openshift v4 cluster fully automated. This has been created to avoid any manual operation for a VMware OpenShift User Provisioned Infrastructure (UPI) implementation.
 
 ## Prerequisites
 
