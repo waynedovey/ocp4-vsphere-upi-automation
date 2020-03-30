@@ -13,7 +13,7 @@ With all the details in hand from the prerequisites, populate the **vars/vars-${
 
 ## Examples Runs
 
-### Automated Build with Prompted options
+### Automated Build with Prompted options with Vault Encrypted Vars
 
 ```bash
 ./cluster-build.sh
@@ -36,6 +36,11 @@ false
 Enable OpenShift Container Storage (OCS) true/false: (Press ENTER for default: false)
 true
 * OpenShift Container Storage (OCS) Setting: true
+```
+### Automated Build with Prompted options No Vault Encrypted Vars
+
+```bash
+./cluster-build-novault.sh
 ```
 
 ## Manual install
@@ -90,4 +95,21 @@ journalctl -b -f -u bootkube.service
 
 ```bash
 ansible-playbook -e @./vars/vars-{CUSTOMER}.yml post-install.yml --ask-vault-pass
+```
+
+## Disconnected Setup
+
+### Repo Sync with versioning
+
+```bash
+./disconnected-sync.sh
+Enter OpenShift Version: (Press ENTER for default: 4.3.8)
+4.3.8
+* Using: 4.3.8
+info: Mirroring 103 images to registry.ocp4.gsslab.brq.redhat.com:443/openshift/ocp4.3.8-x86_64 ...
+```
+### OLM Sync 
+
+```bash
+./disconnected-operators.sh
 ```
