@@ -47,6 +47,8 @@ mv /tmp/imageContentSourcePolicy-flat.yaml redhat-operators-manifests/
 mv /tmp/mapping-skopeo.txt redhat-operators-manifests/
 rm -fr redhat-operators-manifests/mapping.txt redhat-operators-manifests/imageContentSourcePolicy.yaml
 
+echo yes | cp temp/skopeo /usr/local/bin
+
 while read line; do echo $line && skopeo copy --all $line; done < redhat-operators-manifests/mapping-skopeo.txt
 oc apply -f redhat-operators-manifests/imageContentSourcePolicy-flat.yaml
 
