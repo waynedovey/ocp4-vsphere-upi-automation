@@ -15,6 +15,7 @@ if [ "$1" != "--silent" ]; then
 fi
 printf "* Cluster Name: ${BUILD_LAB}\n\n"
 
+# Enable Ansible Roles 
 ./install_requirements.sh
 
 # CreateHelper Node 
