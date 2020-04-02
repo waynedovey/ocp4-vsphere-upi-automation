@@ -1,0 +1,103 @@
+---
+- hosts: localhost
+
+  vars:
+    workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+
+
+  environment:
+    # KUBECONFIG: ./kubeconfig
+    # KUBECONFIG: /root/.kube/config
+    KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+
+  tasks:
+    - name: OCPNODES 1.0 | Cordon Nodes
+      shell: oc adm cordon "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}"
+      loop:
+        - { name : "worker3" }
+        - { name : "worker4" }
+        - { name : "worker5" }
+      ignore_errors: yes
+      tags:
+        - "1"
+
+    - name: OCPNODES 1.1 | Drain Nodes
+      shell: oc adm drain "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}" --ignore-daemonsets --delete-local-dat
+      loop:
+        - { name : "worker3" }
+        - { name : "worker4" }
+        - { name : "worker5" }
+      ignore_errors: yes
+      tags:
+        - "1"
+
+    - name: OCPNODES 1.2 | Delete Nodes
+      shell: oc delete node "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}"
+      loop:
+        - { name : "worker3" }
+        - { name : "worker4" }
+        - { name : "worker5" }
+      ignore_errors: yes
+      tags:
+        - "1"
+
+    - name: VMSETUP 2.0 | Power off Nodes 
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+      loop:
+        - { name : "worker3", template: "{{ templateName }}" }
+        - { name : "worker4", template: "{{ templateName }}" }
+        - { name : "worker5", template: "{{ templateName }}" }
+      tags:
+        - "2"
+
+    - name: VMSETUP 3.0 | Remove Nodes
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: absent
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+      loop:
+        - { name : "worker3", template: "{{ templateName }}" }
+        - { name : "worker4", template: "{{ templateName }}" }
+        - { name : "worker5", template: "{{ templateName }}" }
+      tags:
+        - "3"
+
+    - name: OCPNODES 4.0 | Cleanup up Boostrap Certs
+      shell: oc delete csr $(oc get csr | grep node-bootstrapper | grep 'Approved,Issued' | awk '{ print $1 }')
+      ignore_errors: yes
+      tags:
+        - "4"
+
+    - name: OCPNODES 4.1 | Cleanup up Node Certs
+      shell: oc delete csr $(oc get csr | grep worker| grep 'Approved,Issued' | awk '{ print $1 }')
+      ignore_errors: yes
+      tags:
+        - "4"

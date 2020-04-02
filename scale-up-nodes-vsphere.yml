@@ -1,0 +1,196 @@
+---
+- hosts: localhost
+
+  vars:
+    workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+
+  environment:
+    # KUBECONFIG: ./kubeconfig
+    # KUBECONFIG: /root/.kube/config
+    KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+
+  tasks:
+    - name: VMSETUP 1.0 | "Worker base64 "
+      debug:
+        msg: "{{ workerContent }}"
+      tags:
+        - "1"
+
+    - name: VMSETUP 2.0 | Create worker VMs from the template (not using Multus)
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: "{{ worker_memory }}"
+          num_cpus: "{{ worker_cpu }}"
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      loop:
+        - { name : "worker3", template: "{{ templateName }}" }
+        - { name : "worker4", template: "{{ templateName }}" }
+        - { name : "worker5", template: "{{ templateName }}" }
+      when: enable_multus|bool == False
+      tags:
+        - "2"
+
+    - name: VMSETUP 2.1 | Create worker VMs from the template (using Multus)
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: "{{ worker_memory }}"
+          num_cpus: "{{ worker_cpu }}"
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        - name: "{{ vcenter.vm_network_2 }}"
+        - name: "{{ vcenter.vm_network_3 }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      loop:
+        - { name : "worker3", template: "{{ templateName }}" }
+        - { name : "worker4", template: "{{ templateName }}" }
+        - { name : "worker5", template: "{{ templateName }}" }
+      when: enable_multus|bool == True
+      tags:
+        - "2"
+
+    - name: VMSETUP 3.0 | Update Mac Address Core Cluster
+      command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "worker3", mac: "{{ config.worker3mac }}" }
+        - { name : "worker4", mac: "{{ config.worker4mac }}" }
+        - { name : "worker5", mac: "{{ config.worker5mac }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "3"
+
+    - name: VMSETUP 4.0 | Update CPU latencySensitivity Core Cluster
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "worker3" }
+        - { name : "worker4" }
+        - { name : "worker5" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "4"
+
+    - name: VMSETUP 5.0 | Start all Core Cluster VM's
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredon
+      loop:
+        - { name : "worker3" }
+        - { name : "worker4" }
+        - { name : "worker5" }
+      tags:
+        - "5"
+
+    - name: OCPNODES 6.1 | Approve Certs Bootstrap Node Count
+      shell: oc get csr | grep node-bootstrapper | grep  Pending | awk '{ print $1 }' | [[ $(wc -l) -eq 3 ]]
+      retries: 50
+      delay: 30
+      register: result
+      until: result.rc == 0
+      tags:
+        - "6"
+
+    - name: OCPNODES 6.2 | Approve Certs Bootstrap
+      shell: oc adm certificate approve $(oc get csr | grep node-bootstrapper | grep  Pending | awk '{ print $1 }') 
+      retries: 50
+      delay: 30
+      register: result
+      until: result.rc == 0
+      tags:
+        - "6"
+
+    - name: OCPNODES 6.3 | Approve Certs Worker
+      shell: oc adm certificate approve $(oc get csr | grep worker | grep Pending  | awk '{ print $1 }')
+      retries: 50
+      delay: 30
+      register: result
+      until: result.rc == 0
+      tags:
+        - "6"

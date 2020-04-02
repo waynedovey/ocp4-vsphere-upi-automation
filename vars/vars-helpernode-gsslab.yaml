@@ -18,7 +18,7 @@ dhcp:
   ipid: "192.168.0.0"
   netmaskid: "255.255.255.0"
 registry:
-  name: "quay"
+  name: "registry"
   ipaddr: "192.168.0.100"
 bootstrap:
   name: "bootstrap"
@@ -44,6 +44,15 @@ workers:
   - name: "worker2"
     ipaddr: "192.168.0.13"
     macaddr: "00:50:56:ab:b8:07"
+  - name: "worker3"
+    ipaddr: "192.168.0.14"
+    macaddr: "00:50:56:ab:b8:11"
+  - name: "worker4"
+    ipaddr: "192.168.0.15"
+    macaddr: "00:50:56:ab:b8:12"
+  - name: "worker5"
+    ipaddr: "192.168.0.16"
+    macaddr: "00:50:56:ab:b8:13"
 storage:
   - name: "storage0"
     ipaddr: "192.168.0.51"
