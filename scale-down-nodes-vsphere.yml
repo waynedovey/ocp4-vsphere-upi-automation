@@ -25,7 +25,7 @@
         - "1"
 
     - name: OCPNODES 1.1 | Drain Nodes
-      shell: oc adm drain "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}" --ignore-daemonsets
+      shell: oc adm drain "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}" --ignore-daemonsets --delete-local-dat
       loop:
         - { name : "worker3" }
         - { name : "worker4" }
