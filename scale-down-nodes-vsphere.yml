@@ -90,9 +90,14 @@
       tags:
         - "3"
 
+    - name: OCPNODES 4.0 | Cleanup up Boostrap Certs
+      shell: oc delete csr $(oc get csr | grep node-bootstrapper | grep 'Approved,Issued' | awk '{ print $1 }')
+      ignore_errors: yes
+      tags:
+        - "4"
 
-    - name: OCPNODES 4.0 | Cleanup up Certs
-      shell: oc delete csr $(oc get csr | grep worker | awk '{ print $1 }')
+    - name: OCPNODES 4.1 | Cleanup up Node Certs
+      shell: oc delete csr $(oc get csr | grep worker| grep 'Approved,Issued' | awk '{ print $1 }')
       ignore_errors: yes
       tags:
         - "4"
