@@ -43,6 +43,15 @@ true
 ./cluster-build-novault.sh
 ```
 
+## Helper Node Build
+
+```bash
+./helpernode-build.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
 ## Manual install
 
 ### Prepare OCP OVA, Ignition and install configuration
@@ -97,6 +106,30 @@ journalctl -b -f -u bootkube.service
 ansible-playbook -e @./vars/vars-{CUSTOMER}.yml post-install.yml --ask-vault-pass
 ```
 
+## Cluster Node Scaling
+
+## Scale Up Worker Nodes (Default 3 nodes)
+
+```bash
+./scale-up-nodes.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+
+Enter OpenShift Worker Node Size (small [8gb,2vcpu],medium [32gb,4vcpu],large [64gb,8vcpu]): (Press ENTER for default: small )
+
+* Using:  Cluster Settings Memory 8192 CPU 2
+```
+
+## Scale Down Worker Nodes (Default 3 nodes)
+
+```bash
+./scale-down-nodes.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
 ## Disconnected Setup
 
 ### Repo Sync with versioning
@@ -108,7 +141,7 @@ Enter OpenShift Version: (Press ENTER for default: 4.3.8)
 * Using: 4.3.8
 info: Mirroring 103 images to registry.ocp4.gsslab.brq.redhat.com:443/openshift/ocp4.3.8-x86_64 ...
 ```
-### OLM Sync 
+### OLM Sync
 
 ```bash
 ./disconnected-operators.sh
