@@ -15,9 +15,7 @@ if [ "$1" != "--silent" ]; then
 fi
 printf "* Cluster Name: ${BUILD_LAB}\n\n"
 
-mkdir -p roles
-git clone https://github.com/waynedovey/ocp4-upi-helpernode.git roles/ocp4-upi-helpernode
-git clone https://github.com/waynedovey/389-ldap-server.git roles/389-ldap-server
+./install_requirements.sh
 
 # CreateHelper Node 
 ansible-playbook -e @./vars/vars-helpernode-${BUILD_LAB}.yaml setup-helpernode.yml
