@@ -24,7 +24,7 @@
       tags:
         - "1"
 
-    - name: OCPNODES 1.1 | Cordon Nodes
+    - name: OCPNODES 1.1 | Drain Nodes
       shell: oc adm drain "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}" --ignore-daemonsets
       loop:
         - { name : "worker3" }
