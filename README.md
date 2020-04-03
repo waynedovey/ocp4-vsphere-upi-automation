@@ -146,3 +146,10 @@ info: Mirroring 103 images to registry.ocp4.gsslab.brq.redhat.com:443/openshift/
 ```bash
 ./disconnected-operators.sh
 ```
+## Destroy Cluster 
+
+### Cluster Destroy example
+
+```bash
+./cluster-destroy.sh
+```
