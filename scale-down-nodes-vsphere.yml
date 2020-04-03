@@ -6,7 +6,8 @@
     folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
     datastore: "{{ vcenter.datastore }}"
     govc_file: "/usr/local/bin/govc"
-
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
 
   environment:
     # KUBECONFIG: ./kubeconfig
