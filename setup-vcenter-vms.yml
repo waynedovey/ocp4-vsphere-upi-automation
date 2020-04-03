@@ -426,24 +426,3 @@
       tags:
         - "5"
 
-    - name: OCP-POST 6.0 | Remove Bootrap Node
-      vmware_guest:
-        hostname: "{{ vcenter.ip }}"
-        username: "{{ vcenter.username }}"
-        password: "{{ vcenter.password }}"
-        datacenter: "{{ vcenter.datacenter }}"
-        cluster: "{{ vcenter.cluster }}"
-        validate_certs: no
-        folder: "{{ folder }}"
-        name: "{{ item.name }}"
-        state: absent
-        force: yes
-        template: "{{ item.template }}"
-        disk:
-        - size_gb: 16
-          type: thin
-          datastore: "{{ datastore }}"
-      loop:
-        - { name : "bootstrap", template: "{{ templateName }}" }
-      tags:
-        - "6"
