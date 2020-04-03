@@ -5,8 +5,10 @@
     workerContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64' )}}"
     appendBootstrapContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64' )}}"
     govc_file: "/usr/local/bin/govc"
-  tasks:
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
 
+  tasks:
   - name: VMWARE_PREP 1.0 | Create bin, install-dir and downloads folders
     file:
       path: "{{ playbook_dir }}/{{ item }}"
