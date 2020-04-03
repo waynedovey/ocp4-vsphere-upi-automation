@@ -1,5 +1,5 @@
 ---
-- hosts: bastion.ocp4.gsslab.brq.redhat.com
+- hosts: localhost
 
   vars:
     workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
