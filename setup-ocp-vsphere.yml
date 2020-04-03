@@ -19,14 +19,6 @@
     tags:
       - "1"
 
-  - name: VMWARE_PREP 1.1 | Ensure Patch is installed
-    yum:
-      name: "{{ item }}"
-      state: present
-    with_items: ["patch"]
-    tags:
-      - "1"
-
   - name: VMWARE_PREP 2.0 | Download the latest RHCOS OVA file
     get_url:
       url: "{{ download.ova_image }}"

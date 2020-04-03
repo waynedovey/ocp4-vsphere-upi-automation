@@ -87,3 +87,6 @@ chmod 644 /var/www/html/ignition/bootstrap.ign
 
 # Run Ansible setup-vcenter-vms playbook:
 ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION} worker_memory=${WORKER_MEMORY} worker_cpu=${WORKER_CPU} disconnected_setting=${DISCONNECTED} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml setup-vcenter-vms.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
+
+# Wait for a Cluster Build Status
+ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml cluster-status.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml

@@ -17,4 +17,4 @@ fi
 printf "* Cluster Name: ${BUILD_LAB}\n\n"
 
 # Run Ansible setup-vcenter-vms playbook:
-ansible-playbook -e @./vars/vars-${BUILD_LAB}.yml destroy-ocp-vsphere.yml
+ansible-playbook -e "BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml destroy-ocp-vsphere.yml

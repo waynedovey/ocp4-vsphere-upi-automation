@@ -12,7 +12,7 @@
 
   tasks:
     - name: OCPSTATUS 1.0 | Check for Cluster Status
-      shell: oc get clusterversion | awk '{print $2}' | grep -v VERSION | [[ $(wc -l) -eq 1 ]]
+      shell: "[[ $(oc get clusterversion | awk '{print $2}' | grep -v VERSION) == {{ ocp_version }} ]]"
       retries: 500
       delay: 30
       register: result
