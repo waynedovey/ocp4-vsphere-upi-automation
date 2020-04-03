@@ -374,3 +374,48 @@
       when: enable_ocs_storage|bool == True
       tags:
         - "5"
+
+    - name: VMSETUP 5.2 | Label Core Cluster VM's
+      vmware_tag_manager:
+          hostname: "{{ vcenter.ip }}"
+          username: "{{ vcenter.username }}"
+          password: "{{ vcenter.password }}"
+          validate_certs: no
+          tag_names:
+            - "Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }}"
+            - "OCP-Release-{{ DEFAULT_OCPVERSION }}"
+            - Instance-Owner-Red-Hat-SSA-Team
+          object_name: "{{ item.name }}"
+          object_type: VirtualMachine
+          state: add
+      loop:
+        - { name : "bootstrap" }
+        - { name : "master0" }
+        - { name : "master1" }
+        - { name : "master2" }
+        - { name : "worker0" }
+        - { name : "worker1" }
+        - { name : "worker2" }
+      tags:
+        - "5"
+
+    - name: VMSETUP 5.3 | Label Storage Cluster VM's
+      vmware_tag_manager:
+            hostname: "{{ vcenter.ip }}"
+            username: "{{ vcenter.username }}"
+            password: "{{ vcenter.password }}"
+            validate_certs: no
+            tag_names:
+              - "Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }}"
+              - "OCP-Release-{{ DEFAULT_OCPVERSION }}"
+              - Instance-Owner-Red-Hat-SSA-Team
+            object_name: "{{ item.name }}"
+            object_type: VirtualMachine
+            state: add
+      loop:
+        - { name : "storage0" }
+        - { name : "storage1" }
+        - { name : "storage2" }
+      when: enable_ocs_storage|bool == True
+      tags:
+        - "5"
