@@ -9,12 +9,21 @@
     - "./vars/vars-{{ BUILD_LAB }}.yml"
 
   tasks:
+
   - name: VMWARE_PREP 1.0 | Create bin, install-dir and downloads folders
     file:
       path: "{{ playbook_dir }}/{{ item }}"
       state: directory
       mode: '0755'
     with_items: ["bin", "downloads", "install-dir"]
+    tags:
+      - "1"
+
+  - name: VMWARE_PREP 1.1 | Ensure Patch is installed
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items: ["patch"]
     tags:
       - "1"
 
