@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+
+  vars:
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+
+  environment:
+    # KUBECONFIG: ./kubeconfig
+    # KUBECONFIG: /root/.kube/config
+    KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+
+  tasks:
+    - name: OCPSTATUS 1.0 | Check for Cluster Status
+      shell: oc get clusterversion | awk '{print $2}' | grep -v VERSION | [[ $(wc -l) -eq 1 ]]
+      retries: 500
+      delay: 30
+      register: result
+      until: result.rc == 0
+      tags:
+        - "1"
