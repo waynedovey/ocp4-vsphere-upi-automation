@@ -13,7 +13,7 @@ With all the details in hand from the prerequisites, populate the **vars/vars-${
 
 ## Examples Runs
 
-### Automated Build with Prompted options with Vault Encrypted Vars
+### Automated Build with Prompted options with Vault Encrypted Vars and Version Status Checking
 
 ```bash
 ./cluster-build.sh
@@ -37,7 +37,7 @@ Enable OpenShift Container Storage (OCS) true/false: (Press ENTER for default: f
 true
 * OpenShift Container Storage (OCS) Setting: true
 ```
-### Automated Build with Prompted options No Vault Encrypted Vars
+### Automated Build with Prompted options No Vault Encrypted Vars and Version Status Checking
 
 ```bash
 ./cluster-build-novault.sh
@@ -146,10 +146,22 @@ info: Mirroring 103 images to registry.ocp4.gsslab.brq.redhat.com:443/openshift/
 ```bash
 ./disconnected-operators.sh
 ```
-## Destroy Cluster 
+## Destroy Cluster
 
-### Cluster Destroy example
+### Cluster Destroy Vault
 
 ```bash
 ./cluster-destroy.sh
+Specify Cluster Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
+### Cluster Destroy No Vault
+
+```bash
+./cluster-destroy-novault.sh
+Specify Cluster Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
 ```
