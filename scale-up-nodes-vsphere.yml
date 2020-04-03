@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: 10.44.129.12
 
   vars:
     workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
