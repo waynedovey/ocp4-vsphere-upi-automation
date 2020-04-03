@@ -15,41 +15,7 @@
     KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
 
   tasks:
-    - name: VMSETUP 1.0 | Power off Nodes
-      vmware_guest:
-        hostname: "{{ vcenter.ip }}"
-        username: "{{ vcenter.username }}"
-        password: "{{ vcenter.password }}"
-        datacenter: "{{ vcenter.datacenter }}"
-        cluster: "{{ vcenter.cluster }}"
-        validate_certs: no
-        folder: "{{ folder }}"
-        name: "{{ item.name }}"
-        state: poweredoff
-        template: "{{ item.template }}"
-        disk:
-        - size_gb: 16
-          type: thin
-          datastore: "{{ datastore }}"
-      loop:
-        - { name : "bootstrap", template: "{{ templateName }}" }
-        - { name : "master0", template: "{{ templateName }}" }
-        - { name : "master1", template: "{{ templateName }}" }
-        - { name : "master2", template: "{{ templateName }}" }
-        - { name : "storage0", template: "{{ templateName }}" }
-        - { name : "storage1", template: "{{ templateName }}" }
-        - { name : "storage2", template: "{{ templateName }}" }
-        - { name : "worker0", template: "{{ templateName }}" }
-        - { name : "worker1", template: "{{ templateName }}" }
-        - { name : "worker2", template: "{{ templateName }}" }
-        - { name : "worker3", template: "{{ templateName }}" }
-        - { name : "worker4", template: "{{ templateName }}" }
-        - { name : "worker5", template: "{{ templateName }}" }
-      ignore_errors: true
-      tags:
-        - "1"
-
-    - name: VMSETUP 2.0 | Remove Nodes
+    - name: VMSETUP 1.0 | Remove Nodes
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -60,6 +26,7 @@
         folder: "{{ folder }}"
         name: "{{ item.name }}"
         state: absent
+        force: yes
         template: "{{ item.template }}"
         disk:
         - size_gb: 16
@@ -80,4 +47,4 @@
         - { name : "worker4", template: "{{ templateName }}" }
         - { name : "worker5", template: "{{ templateName }}" }
       tags:
-        - "2"
+        - "1"

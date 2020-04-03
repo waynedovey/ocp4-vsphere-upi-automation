@@ -376,7 +376,7 @@
         - "5"
 
     - name: VMSETUP 5.2 | Label Core Cluster VM's
-      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }}"
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }},OCP-Release-{{ ocp_version }},Instance-Owner-Red-Hat-SSA-Team"
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"
         GOVC_URL: "https://{{ vcenter.ip }}/sdk"
@@ -401,48 +401,49 @@
       until: result.rc == 0
       tags:
         - "5"
-    #
-    # - name: VMSETUP 5.2 | Label Core Cluster VM's
-    #   vmware_tag_manager:
-    #       hostname: "{{ vcenter.ip }}"
-    #       username: "{{ vcenter.username }}"
-    #       password: "{{ vcenter.password }}"
-    #       validate_certs: no
-    #       tag_names:
-    #         - "Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }}"
-    #         - "OCP-Release-{{ DEFAULT_OCPVERSION }}"
-    #         - Instance-Owner-Red-Hat-SSA-Team
-    #       object_name: "{{ item.name }}"
-    #       object_type: VirtualMachine
-    #       state: add
-    #   loop:
-    #     - { name : "bootstrap" }
-    #     - { name : "master0" }
-    #     - { name : "master1" }
-    #     - { name : "master2" }
-    #     - { name : "worker0" }
-    #     - { name : "worker1" }
-    #     - { name : "worker2" }
-    #   tags:
-    #     - "5"
 
-    # - name: VMSETUP 5.3 | Label Storage Cluster VM's
-    #   vmware_tag_manager:
-    #         hostname: "{{ vcenter.ip }}"
-    #         username: "{{ vcenter.username }}"
-    #         password: "{{ vcenter.password }}"
-    #         validate_certs: no
-    #         tag_names:
-    #           - "Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }}"
-    #           - "OCP-Release-{{ DEFAULT_OCPVERSION }}"
-    #           - Instance-Owner-Red-Hat-SSA-Team
-    #         object_name: "{{ item.name }}"
-    #         object_type: VirtualMachine
-    #         state: add
-    #   loop:
-    #     - { name : "storage0" }
-    #     - { name : "storage1" }
-    #     - { name : "storage2" }
-    #   when: enable_ocs_storage|bool == True
-    #   tags:
-    #     - "5"
+    - name: VMSETUP 5.3 | Label Storage Cluster VM's
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }},OCP-Release-{{ ocp_version }},Instance-Owner-Red-Hat-SSA-Team"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+         - { name : "storage0" }
+         - { name : "storage1" }
+         - { name : "storage2" }
+      when: enable_ocs_storage|bool == True
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "5"
+
+    - name: OCP-POST 6.0 | Remove Bootrap Node
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: absent
+        force: yes
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+      loop:
+        - { name : "bootstrap", template: "{{ templateName }}" }
+      tags:
+        - "6"
