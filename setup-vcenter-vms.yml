@@ -395,10 +395,6 @@
          - { name : "worker0" }
          - { name : "worker1" }
          - { name : "worker2" }
-      retries: 3
-      delay: 3
-      register: result
-      until: result.rc == 0
       tags:
         - "5"
 
@@ -419,10 +415,6 @@
          - { name : "storage1" }
          - { name : "storage2" }
       when: enable_ocs_storage|bool == True
-      retries: 3
-      delay: 3
-      register: result
-      until: result.rc == 0
       tags:
         - "5"
 
