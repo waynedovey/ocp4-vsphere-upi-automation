@@ -40,4 +40,4 @@ printf "* Using: ${WORKER_SIZE} Cluster Settings Memory ${WORKER_MEMORY} CPU ${W
 ansible-playbook -e @./vars/vars-helpernode-${BUILD_LAB}.yaml setup-helpernode.yml
 
 # Run Ansible scale-node-vsphere playbook:
-ansible-playbook -e "worker_memory=${WORKER_MEMORY} worker_cpu=${WORKER_CPU}" -e @./vars/vars-${BUILD_LAB}.yml scale-up-nodes-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
+ansible-playbook -e "worker_memory=${WORKER_MEMORY} worker_cpu=${WORKER_CPU} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml scale-up-nodes-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
