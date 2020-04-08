@@ -2,13 +2,13 @@
 bootstrap:
   ignHttpLocation: http://192.168.0.x:8080/ignition/bootstrap.ign
 set_proxy: false
-disconnected: {{ disconnected_setting }}
-enable_multus:false
+disconnected: "{{ disconnected_setting }}"
+enable_multus: false
 domain: lab.example.com
 container_registry: quay.ocp4.{{ domain }}:443
 ocp_release: ocp{{ ocp_version }}-x86_64
 templateName : rhcos-4.3.0-x86_64-vmware
-enable_ocs_storage: false
+enable_ocs_storage: "{{ ocs_setting }}"
 config:
   baseDomain: "{{ domain }}"
   clusterName: ocp4
