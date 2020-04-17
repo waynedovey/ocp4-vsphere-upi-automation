@@ -130,6 +130,29 @@
       tags:
         - "3"
 
+    - name: VMSETUP 4.0 | Update CPU latencySensitivity Core Cluster
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "worker3" }
+        - { name : "worker4" }
+        - { name : "worker5" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "4"
+
     - name: VMSETUP 5.0 | Start all Core Cluster VM's
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
