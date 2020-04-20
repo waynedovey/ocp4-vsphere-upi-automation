@@ -9,6 +9,10 @@ container_registry: quay.ocp4.{{ domain }}:443
 ocp_release: ocp{{ ocp_version }}-x86_64
 templateName : rhcos-4.3.0-x86_64-vmware
 enable_ocs_storage: "{{ ocs_setting }}"
+rhn:
+  username: RHN-User
+  password: IloveRedHat
+  pool_ids: sadfdsafdasfdsafdsafasdfdsaf
 config:
   baseDomain: "{{ domain }}"
   clusterName: ocp4

@@ -46,18 +46,18 @@ print STDERR <<'EOF';
 Wrote:
 
     /tmp/mapping-flat.txt
-    /tmp/mapping-skopeo.txt    
+    /tmp/mapping-skopeo.txt
     /tmp/imageContentSourcePolicy-flat.yaml
 
 Now Run:
 
     while read line; do oc image mirror $line; done < /tmp/mapping-flat.txt
-    
+
     OR if using skopeo
 
     while read line; do echo $line && skopeo copy --all $line; done < /tmp/mapping-skopeo.txt
 
-    THEN 
+    THEN
 
     oc apply -f /tmp/imageContentSourcePolicy-flat.yaml
 

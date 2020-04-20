@@ -1,0 +1,34 @@
+---
+- hosts: localhost
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: helper
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+
+  tasks:
+
+    - name: VMSETUP 1.0 | Destroy Helper Node 
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ hostname }}.{{ config.baseDomain }}"
+        state: absent
+        force: yes
+        template: "rhel7.7-template"
+        disk:
+        - size_gb: 30
+          type: thin
+          datastore: "{{ datastore }}"
+      register: helpernode
+      tags:
+        - "1"
+

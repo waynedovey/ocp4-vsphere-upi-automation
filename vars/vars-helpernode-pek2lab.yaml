@@ -5,7 +5,7 @@ helper:
   ipaddr: "192.168.0.2"
   networkifacename: "ens224"
 dns:
-  domain: "gsslab.brq.redhat.com"
+  domain: "lab.gsslab.pek2.redhat.com"
   clusterid: "ocp4"
   forwarder1: "10.5.30.45"
   forwarder2: "10.5.30.46"

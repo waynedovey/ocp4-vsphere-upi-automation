@@ -18,9 +18,9 @@
     - name: OCPNODES 1.0 | Cordon Nodes
       shell: oc adm cordon "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}"
       loop:
-        - { name : "worker3" }
-        - { name : "worker4" }
-        - { name : "worker5" }
+        - { name : "worker3.{{ config.baseDomain }}" }
+        - { name : "worker4.{{ config.baseDomain }}" }
+        - { name : "worker5.{{ config.baseDomain }}" }
       ignore_errors: yes
       tags:
         - "1"
@@ -28,9 +28,9 @@
     - name: OCPNODES 1.1 | Drain Nodes
       shell: oc adm drain "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}" --ignore-daemonsets --delete-local-data
       loop:
-        - { name : "worker3" }
-        - { name : "worker4" }
-        - { name : "worker5" }
+        - { name : "worker3.{{ config.baseDomain }}" }
+        - { name : "worker4.{{ config.baseDomain }}" }
+        - { name : "worker5.{{ config.baseDomain }}" }
       ignore_errors: yes
       tags:
         - "1"
@@ -38,9 +38,9 @@
     - name: OCPNODES 1.2 | Delete Nodes
       shell: oc delete node "{{ item.name }}.{{ dns.clusterid }}.{{ dns.domain }}"
       loop:
-        - { name : "worker3" }
-        - { name : "worker4" }
-        - { name : "worker5" }
+        - { name : "worker3.{{ config.baseDomain }}" }
+        - { name : "worker4.{{ config.baseDomain }}" }
+        - { name : "worker5.{{ config.baseDomain }}" }
       ignore_errors: yes
       tags:
         - "1"
@@ -62,9 +62,9 @@
           type: thin
           datastore: "{{ datastore }}"
       loop:
-        - { name : "worker3", template: "{{ templateName }}" }
-        - { name : "worker4", template: "{{ templateName }}" }
-        - { name : "worker5", template: "{{ templateName }}" }
+        - { name : "worker3.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker4.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker5.{{ config.baseDomain }}", template: "{{ templateName }}" }
       tags:
         - "2"
 
@@ -85,9 +85,9 @@
           type: thin
           datastore: "{{ datastore }}"
       loop:
-        - { name : "worker3", template: "{{ templateName }}" }
-        - { name : "worker4", template: "{{ templateName }}" }
-        - { name : "worker5", template: "{{ templateName }}" }
+        - { name : "worker3.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker4.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker5.{{ config.baseDomain }}", template: "{{ templateName }}" }
       tags:
         - "3"
 

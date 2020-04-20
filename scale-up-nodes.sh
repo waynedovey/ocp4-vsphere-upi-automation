@@ -37,7 +37,7 @@ fi
 printf "* Using: ${WORKER_SIZE} Cluster Settings Memory ${WORKER_MEMORY} CPU ${WORKER_CPU}\n\n"
 
 # Update the Helper Node 
-ansible-playbook -e @./vars/vars-helpernode-${BUILD_LAB}.yaml setup-helpernode.yml
+ansible-playbook -e "BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-helpernode-${BUILD_LAB}.yaml setup-helpernode.yml
 
 # Run Ansible scale-node-vsphere playbook:
-ansible-playbook -e "worker_memory=${WORKER_MEMORY} worker_cpu=${WORKER_CPU} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml scale-up-nodes-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
+ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION} worker_memory=${WORKER_MEMORY} worker_cpu=${WORKER_CPU} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml scale-up-nodes-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml

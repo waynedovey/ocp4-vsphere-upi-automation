@@ -37,7 +37,7 @@
         cluster: "{{ vcenter.cluster }}"
         validate_certs: no
         folder: "{{ folder }}"
-        name: bootstrap
+        name: "bootstrap.{{ config.baseDomain }}"
         state: poweredoff
         template: "{{ templateName }}"
         disk:
@@ -100,9 +100,9 @@
          - key: hwclockUTC
            value: "TRUE"
       loop:
-        - { name : "master0", template: "{{ templateName }}" }
-        - { name : "master1", template: "{{ templateName }}" }
-        - { name : "master2", template: "{{ templateName }}" }
+        - { name : "master0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master2.{{ config.baseDomain }}", template: "{{ templateName }}" }
       tags:
         - "2"
 
@@ -141,9 +141,9 @@
          - key: hwclockUTC
            value: "TRUE"
       loop:
-        - { name : "worker0", template: "{{ templateName }}" }
-        - { name : "worker1", template: "{{ templateName }}" }
-        - { name : "worker2", template: "{{ templateName }}" }
+        - { name : "worker0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker2.{{ config.baseDomain }}", template: "{{ templateName }}" }
       when: enable_multus|bool == False
       tags:
         - "2"
@@ -185,9 +185,9 @@
          - key: hwclockUTC
            value: "TRUE"
       loop:
-        - { name : "worker0", template: "{{ templateName }}" }
-        - { name : "worker1", template: "{{ templateName }}" }
-        - { name : "worker2", template: "{{ templateName }}" }
+        - { name : "worker0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker2.{{ config.baseDomain }}", template: "{{ templateName }}" }
       when: enable_multus|bool == True
       tags:
         - "2"
@@ -227,9 +227,9 @@
          - key: hwclockUTC
            value: "TRUE"
       loop:
-        - { name : "storage0", template: "{{ templateName }}" }
-        - { name : "storage1", template: "{{ templateName }}" }
-        - { name : "storage2", template: "{{ templateName }}" }
+        - { name : "storage0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage2.{{ config.baseDomain }}", template: "{{ templateName }}" }
       when: enable_ocs_storage|bool == True
       tags:
         - "2"
@@ -247,13 +247,13 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-        - { name : "bootstrap", mac: "{{ config.bootstrapmac }}" }
-        - { name : "master0", mac: "{{ config.master0mac }}" }
-        - { name : "master1", mac: "{{ config.master1mac }}" }
-        - { name : "master2", mac: "{{ config.master2mac }}" }
-        - { name : "worker0", mac: "{{ config.worker0mac }}" }
-        - { name : "worker1", mac: "{{ config.worker1mac }}" }
-        - { name : "worker2", mac: "{{ config.worker2mac }}" }
+        - { name : "bootstrap.{{ config.baseDomain }}", mac: "{{ config.bootstrapmac }}" }
+        - { name : "master0.{{ config.baseDomain }}", mac: "{{ config.master0mac }}" }
+        - { name : "master1.{{ config.baseDomain }}", mac: "{{ config.master1mac }}" }
+        - { name : "master2.{{ config.baseDomain }}", mac: "{{ config.master2mac }}" }
+        - { name : "worker0.{{ config.baseDomain }}", mac: "{{ config.worker0mac }}" }
+        - { name : "worker1.{{ config.baseDomain }}", mac: "{{ config.worker1mac }}" }
+        - { name : "worker2.{{ config.baseDomain }}", mac: "{{ config.worker2mac }}" }
       retries: 3
       delay: 3
       register: result
@@ -274,9 +274,9 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-        - { name : "storage0", mac: "{{ config.storage0mac }}" }
-        - { name : "storage1", mac: "{{ config.storage1mac }}" }
-        - { name : "storage2", mac: "{{ config.storage2mac }}" }
+        - { name : "storage0.{{ config.baseDomain }}", mac: "{{ config.storage0mac }}" }
+        - { name : "storage1.{{ config.baseDomain }}", mac: "{{ config.storage1mac }}" }
+        - { name : "storage2.{{ config.baseDomain }}", mac: "{{ config.storage2mac }}" }
       retries: 3
       delay: 3
       register: result
@@ -298,13 +298,13 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-        - { name : "bootstrap" }
-        - { name : "master0" }
-        - { name : "master1" }
-        - { name : "master2" }
-        - { name : "worker0" }
-        - { name : "worker1" }
-        - { name : "worker2" }
+        - { name : "bootstrap.{{ config.baseDomain }}" }
+        - { name : "master0.{{ config.baseDomain }}" }
+        - { name : "master1.{{ config.baseDomain }}" }
+        - { name : "master2.{{ config.baseDomain }}" }
+        - { name : "worker0.{{ config.baseDomain }}" }
+        - { name : "worker1.{{ config.baseDomain }}" }
+        - { name : "worker2.{{ config.baseDomain }}" }
       retries: 3
       delay: 3
       register: result
@@ -325,9 +325,9 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-        - { name : "storage0" }
-        - { name : "storage1" }
-        - { name : "storage2" }
+        - { name : "storage0.{{ config.baseDomain }}" }
+        - { name : "storage1.{{ config.baseDomain }}" }
+        - { name : "storage2.{{ config.baseDomain }}" }
       retries: 3
       delay: 3
       register: result
@@ -347,13 +347,13 @@
         name: "{{ item.name }}"
         state: poweredon
       loop:
-        - { name : "bootstrap" }
-        - { name : "master0" }
-        - { name : "master1" }
-        - { name : "master2" }
-        - { name : "worker0" }
-        - { name : "worker1" }
-        - { name : "worker2" }
+        - { name : "bootstrap.{{ config.baseDomain }}" }
+        - { name : "master0.{{ config.baseDomain }}" }
+        - { name : "master1.{{ config.baseDomain }}" }
+        - { name : "master2.{{ config.baseDomain }}" }
+        - { name : "worker0.{{ config.baseDomain }}" }
+        - { name : "worker1.{{ config.baseDomain }}" }
+        - { name : "worker2.{{ config.baseDomain }}" }
       tags:
         - "5"
 
@@ -368,9 +368,9 @@
           name: "{{ item.name }}"
           state: poweredon
       loop:
-        - { name : "storage0" }
-        - { name : "storage1" }
-        - { name : "storage2" }
+        - { name : "storage0.{{ config.baseDomain }}" }
+        - { name : "storage1.{{ config.baseDomain }}" }
+        - { name : "storage2.{{ config.baseDomain }}" }
       when: enable_ocs_storage|bool == True
       tags:
         - "5"
@@ -388,13 +388,13 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-         - { name : "bootstrap" }
-         - { name : "master0" }
-         - { name : "master1" }
-         - { name : "master2" }
-         - { name : "worker0" }
-         - { name : "worker1" }
-         - { name : "worker2" }
+         - { name : "bootstrap.{{ config.baseDomain }}" }
+         - { name : "master0.{{ config.baseDomain }}" }
+         - { name : "master1.{{ config.baseDomain }}" }
+         - { name : "master2.{{ config.baseDomain }}" }
+         - { name : "worker0.{{ config.baseDomain }}" }
+         - { name : "worker1.{{ config.baseDomain }}" }
+         - { name : "worker2.{{ config.baseDomain }}" }
       tags:
         - "5"
 
@@ -411,9 +411,9 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-         - { name : "storage0" }
-         - { name : "storage1" }
-         - { name : "storage2" }
+         - { name : "storage0.{{ config.baseDomain }}" }
+         - { name : "storage1.{{ config.baseDomain }}" }
+         - { name : "storage2.{{ config.baseDomain }}" }
       when: enable_ocs_storage|bool == True
       tags:
         - "5"
