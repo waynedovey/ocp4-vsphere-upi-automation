@@ -43,10 +43,28 @@ true
 ./cluster-build-novault.sh
 ```
 
-## Helper Node Build
+## Helper Node Deploy and Build 
+
+```bash
+./helper-deploy.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
+## Helper Node Build (Standalone)
 
 ```bash
 ./helpernode-build.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
+## Helper Node destroy
+
+```bash
+./helper-destroy.sh
 Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
 
 * Cluster Name: gsslab
