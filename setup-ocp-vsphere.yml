@@ -4,9 +4,13 @@
     masterContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64' )}}"
     workerContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64' )}}"
     appendBootstrapContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64' )}}"
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
     govc_file: "/usr/local/bin/govc"
+    hostname: helper
   vars_files:
     - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-${BUILD_LAB}.yaml"
 
   tasks:
 
@@ -131,3 +135,65 @@
       dest: "{{ playbook_dir }}/install-dir/append-bootstrap-vm-param.txt"
     tags:
       - "13"
+
+  - name: HELPESETUP 14.0 | Get Helper Node info
+    vmware_guest:
+      hostname: "{{ vcenter.ip }}"
+      username: "{{ vcenter.username }}"
+      password: "{{ vcenter.password }}"
+      datacenter: "{{ vcenter.datacenter }}"
+      validate_certs: no
+      folder: "{{ folder }}"
+      name: "{{ hostname }}.{{ config.baseDomain }}"
+      state: poweredon
+      wait_for_ip_address: yes
+    register: helpernode
+    tags:
+      - "14"
+
+  - name: HELPESETUP 15.0 | Set Facts
+    set_fact:
+      new_vm: "{{ helpernode }}"
+    tags:
+      - "15"
+
+  - name: HELPESETUP 16.0 | Dynamic Nodes
+    add_host:
+      hostname: "{{ item.hw_name }}"
+      ansible_host: "{{ item.ipv4 }}"
+      groups: helpernode_ssh
+    with_items:
+      - "{{ new_vm.instance }}"
+    tags:
+      - "16"
+
+- name: Configure Helper
+  hosts: helpernode_ssh
+  become: yes
+  become_method: sudo
+  gather_facts: false
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: "helper"
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-${BUILD_LAB}.yaml"
+
+  tasks:
+
+    - name: HELPESETUP 17.0 | Wait for SSH banners
+      local_action: wait_for port=22 host={{ ansible_host }} search_regex=OpenSSH delay=5
+      become: false
+      tags:
+        - "17"
+
+    - name: HELPESETUP 18.0 | Set Hostname
+      copy:
+        src: install-dir/bootstrap.ign
+        dest: /var/www/html/ignition/bootstrap.ign
+        mode: '644'
+      tags:
+        - "18"

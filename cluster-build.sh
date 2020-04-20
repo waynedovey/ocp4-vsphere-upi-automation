@@ -81,10 +81,6 @@ printf "* OpenShift Container Storage (OCS) Setting: ${OCS_SETTING}\n\n"
 # Run Ansible setup-ocp-vsphere playbook:
 ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION} disconnected_setting=${DISCONNECTED} ocs_setting=${OCS_SETTING} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml setup-ocp-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
 
-# Copy Ignition file to the Apache's ignition folder under DocumentRoot:
-cp install-dir/bootstrap.ign /var/www/html/ignition
-chmod 644 /var/www/html/ignition/bootstrap.ign
-
 # Run Ansible setup-vcenter-vms playbook:
 ansible-playbook -e "ocp_version=${DEFAULT_OCPVERSION} worker_memory=${WORKER_MEMORY} worker_cpu=${WORKER_CPU} disconnected_setting=${DISCONNECTED} ocs_setting=${OCS_SETTING} BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml setup-vcenter-vms.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
 

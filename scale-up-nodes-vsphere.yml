@@ -56,9 +56,9 @@
          - key: hwclockUTC
            value: "TRUE"
       loop:
-        - { name : "worker3", template: "{{ templateName }}" }
-        - { name : "worker4", template: "{{ templateName }}" }
-        - { name : "worker5", template: "{{ templateName }}" }
+        - { name : "worker3.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker4.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker5.{{ config.baseDomain }}", template: "{{ templateName }}" }
       when: enable_multus|bool == False
       tags:
         - "2"
@@ -100,9 +100,9 @@
          - key: hwclockUTC
            value: "TRUE"
       loop:
-        - { name : "worker3", template: "{{ templateName }}" }
-        - { name : "worker4", template: "{{ templateName }}" }
-        - { name : "worker5", template: "{{ templateName }}" }
+        - { name : "worker3.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker4.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker5.{{ config.baseDomain }}", template: "{{ templateName }}" }
       when: enable_multus|bool == True
       tags:
         - "2"
@@ -120,9 +120,9 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-        - { name : "worker3", mac: "{{ config.worker3mac }}" }
-        - { name : "worker4", mac: "{{ config.worker4mac }}" }
-        - { name : "worker5", mac: "{{ config.worker5mac }}" }
+        - { name : "worker3.{{ config.baseDomain }}", mac: "{{ config.worker3mac }}" }
+        - { name : "worker4.{{ config.baseDomain }}", mac: "{{ config.worker4mac }}" }
+        - { name : "worker5.{{ config.baseDomain }}", mac: "{{ config.worker5mac }}" }
       retries: 3
       delay: 3
       register: result
@@ -143,9 +143,9 @@
         GOVC_CLUSTER: "{{ vcenter.cluster }}"
         GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
       loop:
-        - { name : "worker3" }
-        - { name : "worker4" }
-        - { name : "worker5" }
+        - { name : "worker3.{{ config.baseDomain }}" }
+        - { name : "worker4.{{ config.baseDomain }}" }
+        - { name : "worker5.{{ config.baseDomain }}" }
       retries: 3
       delay: 3
       register: result
@@ -164,9 +164,28 @@
         name: "{{ item.name }}"
         state: poweredon
       loop:
-        - { name : "worker3" }
-        - { name : "worker4" }
-        - { name : "worker5" }
+        - { name : "worker3.{{ config.baseDomain }}" }
+        - { name : "worker4.{{ config.baseDomain }}" }
+        - { name : "worker5.{{ config.baseDomain }}" }
+      tags:
+        - "5"
+
+    - name: VMSETUP 5.1 | Label Cluster VM's
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }},OCP-Release-{{ ocp_version }},Instance-Owner-Red-Hat-SSA-Team"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+         - { name : "worker3.{{ config.baseDomain }}" }
+         - { name : "worker4.{{ config.baseDomain }}" }
+         - { name : "worker5.{{ config.baseDomain }}" }
       tags:
         - "5"
 

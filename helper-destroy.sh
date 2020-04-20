@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BUILD_LAB=gsslab
+BUILD_LAB=pek2lab
 
 # Set the Cluster 
 if [ "$1" != "--silent" ]; then
@@ -12,5 +12,8 @@ if [ "$1" != "--silent" ]; then
 fi
 printf "* Cluster Name: ${BUILD_LAB}\n\n"
 
-# Remove Nodes
-ansible-playbook -e "BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-helpernode-${BUILD_LAB}.yaml -e @./vars/vars-${BUILD_LAB}.yml scale-down-nodes-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
+# Build Node
+ansible-playbook -e "BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml helper-destroy-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
+
+# Update the Helper Node
+#ansible-playbook -e @./vars/vars-helpernode-${BUILD_LAB}.yaml setup-helpernode.yml
