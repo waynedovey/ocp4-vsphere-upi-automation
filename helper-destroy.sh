@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BUILD_LAB=pek2lab
+BUILD_LAB=gsslab
 
 # Set the Cluster 
 if [ "$1" != "--silent" ]; then
