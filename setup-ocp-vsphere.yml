@@ -10,7 +10,7 @@
     hostname: helper
   vars_files:
     - "./vars/vars-{{ BUILD_LAB }}.yml"
-    - "./vars/vars-helpernode-${BUILD_LAB}.yaml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
 
   tasks:
 
@@ -180,7 +180,7 @@
     hostname: "helper"
   vars_files:
     - "./vars/vars-{{ BUILD_LAB }}.yml"
-    - "./vars/vars-helpernode-${BUILD_LAB}.yaml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
 
   tasks:
 

@@ -3,7 +3,8 @@ disk: vda
 helper:
   name: "helper"
   ipaddr: "192.168.0.2"
-  networkifacename: "ens192"
+  networkifacename: "ens224"
+  macaddr: "00:50:56:b5:16:6c"
 dns:
   domain: "lab.gsslab.pek2.redhat.com"
   clusterid: "ocp4"
