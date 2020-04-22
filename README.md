@@ -230,6 +230,7 @@ EOF
 ```
 
 ```bash
+cat <<EOF > userdata.yaml
 #cloud-config
 
 users:
@@ -253,6 +254,7 @@ export VM="/VMLAB/vm/rhel7.7-template"
 export METADATA=$(gzip -c9 <metadata.yaml | { base64 -w0 2>/dev/null || base64; }) \
        USERDATA=$(gzip -c9 <userdata.yaml | { base64 -w0 2>/dev/null || base64; })
 ```
+#### Update RHEL/CentOS template on VMware service (Ensure GOVC profile has been exported for the relevant Cluster)
 
 ```bash
 govc vm.change -vm "${VM}" \
