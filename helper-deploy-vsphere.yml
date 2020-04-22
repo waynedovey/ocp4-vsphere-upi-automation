@@ -204,6 +204,26 @@
       tags:
         - "11"
 
+    - name: HELPER 11.1 | Add DNS
+      nmcli:
+        conn_name: "{{ helper.networkifacename }}"
+        type: ethernet
+        dns4:
+        - 127.0.0.1
+        state: present
+      tags:
+        - "11"
+
+    - name: HELPER 11.2 | Add DNS
+      nmcli:
+        conn_name: "{{ helper.networkifdefault }}"
+        type: ethernet
+        dns4:
+        - 127.0.0.1
+        state: present
+      tags:
+        - "11"
+
     - name: HELPER 12.0 | Enable IP Forwarding
       sysctl:
         name: net.ipv4.ip_forward
@@ -218,6 +238,33 @@
       shell: nmcli connection modify "{{ helper.networkifacename }}" ipv4.method static
       tags:
         - "13"
+
+    - name: HELPER 13.1 | Remove DHCP DNS
+      shell: nmcli con mod "{{ helper.networkifacename }}" ipv4.ignore-auto-dns yes
+      tags:
+        - "13"
+
+    - name: HELPER 13.2 | Remove DHCP DNS
+      shell: nmcli con mod "{{ helper.networkifdefault }}"  ipv4.ignore-auto-dns yes
+      tags:
+        - "13"
+
+    - name: HELPER 14.0 | Copy SSH Private Keys
+      copy:
+        src: ~/.ssh/id_rsa
+        dest: "/root/.ssh/id_rsa"
+        mode: 0400
+      tags:
+        - "14"
+
+    - name: HELPER 14.1 | Copy SSH Public Keys
+      copy:
+        src: ~/.ssh/id_rsa.pub
+        dest: "/root/.ssh/id_rsa.pub"
+        mode: 0600
+      tags:
+        - "14"
+
 
 - name: Build Helper
   hosts: helpernode_ssh

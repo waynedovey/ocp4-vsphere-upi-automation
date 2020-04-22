@@ -2,8 +2,13 @@
 - hosts: localhost
 
   vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: helper
   vars_files:
     - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
 
   environment:
     # KUBECONFIG: ./kubeconfig
@@ -11,6 +16,7 @@
     KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
 
   tasks:
+
     - name: OCPSTATUS 1.0 | Check for Cluster Status
       shell: "[[ $(oc get clusterversion | awk '{print $2}' | grep -v VERSION) == {{ ocp_version }} ]]"
       retries: 500
@@ -19,3 +25,90 @@
       until: result.rc == 0
       tags:
         - "1"
+
+    - name: OCPSTATUS 2.0 | Get Helper Node info
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ hostname }}.{{ config.baseDomain }}"
+        state: poweredon
+        wait_for_ip_address: yes
+      register: helpernode
+      tags:
+        - "2"
+
+    - name: OCPSTATUS 2.1 | Set Facts
+      set_fact:
+        new_vm: "{{ helpernode }}"
+      tags:
+        - "2"
+
+    - name: OCPSTATUS 2.2 | Dynamic Nodes
+      add_host:
+        hostname: "{{ item.hw_name }}"
+        ansible_host: "{{ item.ipv4 }}"
+        groups: helpernode_ssh
+      with_items:
+        - "{{ new_vm.instance }}"
+      tags:
+        - "2"
+
+- name: Configure Helper
+  hosts: helpernode_ssh
+  become: yes
+  become_method: sudo
+  gather_facts: false
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: "helper"
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
+
+  tasks:
+
+    - name: OCPSTATUS 3.0 | Wait for SSH banners
+      local_action: wait_for port=22 host={{ ansible_host }} search_regex=OpenSSH delay=5
+      become: false
+      tags:
+        - "3"
+
+    - name: OCPSTATUS 4.0 | Create Kube DR
+      file:
+        path: /root/.kube
+        state: directory
+        mode: '0750'
+      tags:
+        - "4"
+
+    - name: OCPSTATUS 5.0 | Copy Auth File
+      copy:
+        src: "{{ playbook_dir }}/install-dir/auth/kubeconfig"
+        dest: "/root/.kube/config"
+      tags:
+        - "5"
+
+    - name: OCPSTATUS 6.0 | Copy OC File
+      copy:
+        src: "{{ playbook_dir }}/bin/oc"
+        dest: "/usr/local/bin/oc"
+        mode: '0755'
+      tags:
+        - "6"
+
+    - name: OCPSTATUS 7.0 | Ensure DNS on Helper Local
+      shell: nmcli con mod "{{ helper.networkifacename }}" ipv4.dns "127.0.0.1"
+      tags:
+        - "8"
+
+    - name: OCPSTATUS 8.0 | Apply DNS on Helper Local
+      shell:  nmcli con down "{{ helper.networkifacename }}" && nmcli con up "{{ helper.networkifacename }}"
+      tags:
+        - "8"

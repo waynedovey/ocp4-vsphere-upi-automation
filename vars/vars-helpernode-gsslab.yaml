@@ -3,6 +3,7 @@ disk: vda
 helper:
   name: "helper"
   ipaddr: "192.168.0.2"
+  networkifdefault: "ens192"
   networkifacename: "ens224"
   macaddr: "00:50:56:b5:16:6c"
 dns:
