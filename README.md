@@ -184,17 +184,17 @@ Specify Cluster Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gss
 * Cluster Name: gsslab
 ```
 
-## VMware Cloud-Init Image Guide
+# VMware Cloud-Init Image Guide
 
-### RHEL or CentOS Template Node Cloud-Init install 
+## RHEL or CentOS Template Node Cloud-Init install 
 
-## Creating a Generic Cloud-Init OS Image rhel7/CentOS
+### Creating a Generic Cloud-Init OS Image rhel7/CentOS
 
 ```bash
 yum -y install cloud-init 
 ```
 
-# Alernative Pip install 
+#### Alernative Pip install 
 
 ```bash
 curl -O https://bootstrap.pypa.io/get-pip.py
@@ -204,7 +204,7 @@ curl -O https://bootstrap.pypa.io/get-pip.py
 python get-pip.py --user
 ```
 
-# VMware Custom Cloud-init profile install 
+#### VMware Custom Cloud-init profile install 
 ```bash
 yum install -y https://github.com/vmware/cloud-init-vmware-guestinfo/releases/download/v1.1.0/cloud-init-vmware-guestinfo-1.1.0-1.el7.noarch.rpm
 ```
