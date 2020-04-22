@@ -183,3 +183,84 @@ Specify Cluster Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gss
 
 * Cluster Name: gsslab
 ```
+
+## VMware Cloud-Init Image Guide
+
+### RHEL or CentOS Template Node Cloud-Init install 
+
+## Creating a Generic Cloud-Init OS Image rhel7/CentOS
+
+```bash
+yum -y install cloud-init 
+```
+
+# Alernative Pip install 
+
+```bash
+curl -O https://bootstrap.pypa.io/get-pip.py
+```
+
+```bash
+python get-pip.py --user
+```
+
+# VMware Custom Cloud-init profile install 
+```bash
+python get-pip.py --user
+yum install -y https://github.com/vmware/cloud-init-vmware-guestinfo/releases/download/v1.1.0/cloud-init-vmware-guestinfo-1.1.0-1.el7.noarch.rpm
+```
+
+```bash
+curl -sSL https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo/master/install.sh | sh -
+```
+
+### MetaData and UserData Creation
+
+```bash
+cat <<EOF > metadata.yaml
+instance-id: helper-boot
+local-hostname: helper-boot
+network:
+  version: 2
+  ethernets:
+    nics:
+      match:
+        name: ens*
+      dhcp4: yes
+EOF
+```
+
+```bash
+#cloud-config
+
+users:
+  - default
+  - name: openshift
+    primary_group: openshift
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo, wheel
+    ssh_import_id: None
+    lock_passwd: true
+    ssh_authorized_keys:
+    - ssh-rsa xxxxxxxxxxxxxxx   
+EOF
+```
+
+```bash
+export VM="/VMLAB/vm/rhel7.7-template"
+```
+
+```bash
+export METADATA=$(gzip -c9 <metadata.yaml | { base64 -w0 2>/dev/null || base64; }) \
+       USERDATA=$(gzip -c9 <userdata.yaml | { base64 -w0 2>/dev/null || base64; })
+```
+
+```bash
+govc vm.change -vm "${VM}" \
+  -e guestinfo.metadata="${METADATA}" \
+  -e guestinfo.metadata.encoding="gzip+base64" \
+  -e guestinfo.userdata="${USERDATA}" \
+  -e guestinfo.userdata.encoding="gzip+base64"
+```
+
+
