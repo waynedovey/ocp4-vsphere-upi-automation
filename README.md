@@ -206,7 +206,6 @@ python get-pip.py --user
 
 # VMware Custom Cloud-init profile install 
 ```bash
-python get-pip.py --user
 yum install -y https://github.com/vmware/cloud-init-vmware-guestinfo/releases/download/v1.1.0/cloud-init-vmware-guestinfo-1.1.0-1.el7.noarch.rpm
 ```
 
