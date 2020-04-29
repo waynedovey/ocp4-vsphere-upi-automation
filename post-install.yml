@@ -130,6 +130,7 @@
 
   - name: POSTINSTALL 5.0 | Remove generic Kubeadmin User
     command: oc delete secrets kubeadmin -n kube-system
+    ignore_errors: yes
     register: result5
     # failed_when: "'NotFound' not in result5.stderr"  # use this when run multiple times
     tags:
