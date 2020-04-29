@@ -84,6 +84,7 @@
     command: oc create secret generic ldap-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
     # failed_when: "'already exists' not in result3.stderr"  # use this when run multiple times
     register: result3
+    ignore_errors: yes
     tags:
       - "3"
 
