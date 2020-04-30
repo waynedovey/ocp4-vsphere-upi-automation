@@ -1,3 +1,0 @@
-ansible-playbook -e @./vars/vars-${BUILD_LAB}.yml post-install.yml \
---vault-password-file=ocp4-vsphere-upi-automation-vault.yml \
---skip-tags=4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
