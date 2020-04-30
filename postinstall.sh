@@ -4,10 +4,6 @@ DISCONNECTED=false
 OCS_SETTING=false
 BUILD_LAB=gsslab
 
-# Cleanup:
-rm -fr install-dir bin downloads
-mkdir -p {install-dir,bin,downloads}
-
 # Set the OCP version
 if [ "$1" != "--silent" ]; then
     printf "Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: ${BUILD_LAB})\n"
@@ -49,5 +45,5 @@ printf "* OpenShift Container Storage (OCS) Setting: ${OCS_SETTING}\n\n"
 # Run Ansible post-install playbook:
 ansible-playbook -e "disconnected_setting=${DISCONNECTED} ocs_setting=${OCS_SETTING} BUILD_LAB=${BUILD_LAB}" \
 -e @./vars/vars-${BUILD_LAB}.yml post-install.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml \
---skip-tag=9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24 \
+--skip-tag=10,11,12,13,14,15,16,17,18,19,20,21,22,23,24 \
 --skip-tags=6,7
