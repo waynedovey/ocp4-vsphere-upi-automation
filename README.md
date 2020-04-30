@@ -4,7 +4,7 @@ The goal of this repo is to make deploying and redeploying a new Openshift v4 cl
 
 ## Prerequisites
 
-With all the details in hand from the prerequisites, populate the **vars/vars-${BUILD_LAB}.yml** in the root folder of this repo and trigger the installation seen in the example runs. 
+With all the details in hand from the prerequisites, populate the **vars/vars-${BUILD_LAB}.yml** in the root folder of this repo and trigger the installation seen in the example runs.
 
 ## Requirements
 
@@ -43,7 +43,7 @@ true
 ./cluster-build-novault.sh
 ```
 
-## Helper Node Deploy and Build 
+## Helper Node Deploy and Build
 
 ```bash
 ./helper-deploy.sh
@@ -118,10 +118,33 @@ ssh core@192.168.0.xxx
 journalctl -b -f -u bootkube.service
 ```
 
-## Post Deployment Tasks
+## Post Deployment Tasks (Default HTPasswd Auth Provider)
 
 ```bash
-ansible-playbook -e @./vars/vars-{CUSTOMER}.yml post-install.yml --ask-vault-pass
+./postinstall.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+
+Confirm OpenShift Disconnected setting true/false: (Press ENTER for default: false)
+
+* Disconnected Setting: false
+
+Confirm OpenShift Container Storage (OCS) true/false: (Press ENTER for default: false)
+
+* OpenShift Container Storage (OCS) Setting: false
+
+Confirm HTPassword Auth true/false: (Press ENTER for default: true)
+
+* HTPassword Auth Setting: true
+
+Confirm LDAP Auth true/false: (Press ENTER for default: false)
+
+* LDAP Auth Setting: false
+
+Confirm NFS Storage true/false: (Press ENTER for default: false)
+
+* NFS Storage Setting: false
 ```
 
 ## Cluster Node Scaling
@@ -186,15 +209,15 @@ Specify Cluster Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gss
 
 # VMware Cloud-Init Image Guide
 
-## RHEL or CentOS Template Node Cloud-Init install 
+## RHEL or CentOS Template Node Cloud-Init install
 
 ### Creating a Generic Cloud-Init OS Image rhel7/CentOS
 
 ```bash
-yum -y install cloud-init 
+yum -y install cloud-init
 ```
 
-#### Alernative Pip install 
+#### Alernative Pip install
 
 ```bash
 curl -O https://bootstrap.pypa.io/get-pip.py
@@ -204,7 +227,7 @@ curl -O https://bootstrap.pypa.io/get-pip.py
 python get-pip.py --user
 ```
 
-#### VMware Custom Cloud-init profile install 
+#### VMware Custom Cloud-init profile install
 ```bash
 yum install -y https://github.com/vmware/cloud-init-vmware-guestinfo/releases/download/v1.1.0/cloud-init-vmware-guestinfo-1.1.0-1.el7.noarch.rpm
 ```
@@ -242,7 +265,7 @@ users:
     ssh_import_id: None
     lock_passwd: true
     ssh_authorized_keys:
-    - ssh-rsa xxxxxxxxxxxxxxx   
+    - ssh-rsa xxxxxxxxxxxxxxx
 EOF
 ```
 
