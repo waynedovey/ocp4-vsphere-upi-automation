@@ -320,19 +320,36 @@
     tags:
       - "12"
 
-  - name: POSTINSTALL 12.1 | Enable Thin Registry PVC (VMware thin)
+  - name: POSTINSTALL 12.1 | Enable NFS Registry
     k8s:
       state: present
       # apply: "yes"  # only works with Ansible 2.9 and higher
       namespace: "openshift-image-registry"
-      src: "./postinstall/registry-thin-pvc.yml"
-    when: enable_ocs_storage|bool == False
+      src: "./postinstall/registry-nfs-pvc.yml"
+    when: enable_nfs_storage|bool == True
     tags:
       - "12"
 
-  - name: POSTINSTALL 13.0 | Change registry Operator to "Managed"
+  - name: POSTINSTALL 13.0 | Change registry to PVC
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
     register: result13
+    when: enable_nfs_storage|bool == True
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 13.1 | Change registry to PVC
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
+    register: result13
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 13.2 | Change registry to EmptyDir
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"emptyDir\": {}}}}' -n openshift-image-registry"
+    register: result13
+    when:
+      - enable_nfs_storage|bool == False
+      - enable_ocs_storage|bool == False
     tags:
       - "13"
 
