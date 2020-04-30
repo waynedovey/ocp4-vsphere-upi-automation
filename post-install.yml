@@ -76,6 +76,7 @@
             htpasswd:
               fileData:
                 name: htpasswd-secret
+    ignore_errors: yes
     tags:
       - "2"
 
