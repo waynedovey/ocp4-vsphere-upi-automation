@@ -117,6 +117,7 @@
                 name: ldap-secret
               insecure: true
               url: "{{ ldap_url }}"
+    ignore_errors: yes
     tags:
       - "3"
 
