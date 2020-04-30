@@ -2,8 +2,9 @@
 
 DISCONNECTED=false
 OCS_SETTING=false
-HTTP_AUTH_SETTING=false
+HTTP_AUTH_SETTING=true
 LDAP_AUTH_SETTING=false
+NFS_STORAGE_SETTING=false
 BUILD_LAB=gsslab
 
 # Set the OCP version
@@ -53,7 +54,7 @@ if [ "$1" != "--silent" ]; then
     elif [ "${HTTP_AUTH_CHOICE}" == "false" ]; then
         HTTP_AUTH_SETTING=false
     elif [ "${HTTP_AUTH_CHOICE}" != "" ]; then
-        HTTP_AUTH_SETTING=false
+        HTTP_AUTH_SETTING=true
     fi
 fi
 printf "* HTPassword Auth Setting: ${HTTP_AUTH_SETTING}\n\n"
@@ -72,8 +73,22 @@ if [ "$1" != "--silent" ]; then
 fi
 printf "* LDAP Auth Setting: ${LDAP_AUTH_SETTING}\n\n"
 
+# Enable NFS Storage
+if [ "$1" != "--silent" ]; then
+    printf "Confirm NFS Storage true/false: (Press ENTER for default: ${NFS_STORAGE_SETTING})\n"
+    read -r NFS_STORAGE_CHOICE
+    if [ "${NFS_STORAGE_CHOICE}" == "true" ]; then
+        NFS_STORAGE_SETTING=true
+    elif [ "${NFS_STORAGE_CHOICE}" == "false" ]; then
+        NFS_STORAGE_SETTING=false
+    elif [ "${NFS_STORAGE_CHOICE}" != "" ]; then
+        NFS_STORAGE_SETTING=false
+    fi
+fi
+printf "* NFS Storage Setting: ${NFS_STORAGE_SETTING}\n\n"
+
 # Run Ansible post-install playbook:
-ansible-playbook -e "disconnected_setting=${DISCONNECTED} ocs_setting=${OCS_SETTING} enable_htpasswd_auth=${HTTP_AUTH_SETTING} enable_ldap_auth=${LDAP_AUTH_SETTING} BUILD_LAB=${BUILD_LAB}" \
+ansible-playbook -e "disconnected_setting=${DISCONNECTED} ocs_setting=${OCS_SETTING} enable_htpasswd_auth=${HTTP_AUTH_SETTING} enable_ldap_auth=${LDAP_AUTH_SETTING} enable_nfs_storage=${NFS_STORAGE_SETTING} BUILD_LAB=${BUILD_LAB}" \
 -e @./vars/vars-${BUILD_LAB}.yml post-install.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml \
---skip-tag=10,11,12,13,14,15,16,17,18,19,20,21,22,23,24 \
+--skip-tag=14,15,16,17,18,19,20,21,22,23,24 \
 --skip-tags=6,7
