@@ -15,7 +15,6 @@
     oc_admin_role: "cluster-admin"
     oc_app_domain: "apps.ocp4.lab.gsslab.pek2.redhat.com"
     oc_api_domain: "api.ocp4.lab.gsslab.pek2.redhat.com"
-    # enable_ocs_storage: False
 
   environment:
     # KUBECONFIG: ./kubeconfig
@@ -56,6 +55,8 @@
     command: oc create secret generic htpass-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
     # failed_when: "'already exists' not in result2.stderr"  # use this when run multiple times
     register: result2
+    ignore_errors: yes
+    when: enable_htpasswd_auth |bool == True
     tags:
       - "2"
 
@@ -75,7 +76,8 @@
             type: HTPasswd
             htpasswd:
               fileData:
-                name: htpasswd-secret
+                name: htpass-secret
+    when: enable_htpasswd_auth |bool == True
     tags:
       - "2"
 
@@ -83,6 +85,8 @@
     command: oc create secret generic ldap-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
     # failed_when: "'already exists' not in result3.stderr"  # use this when run multiple times
     register: result3
+    ignore_errors: yes
+    when: enable_ldap_auth |bool == True
     tags:
       - "3"
 
@@ -115,6 +119,7 @@
                 name: ldap-secret
               insecure: true
               url: "{{ ldap_url }}"
+    when: enable_ldap_auth |bool == True
     tags:
       - "3"
 
@@ -128,6 +133,7 @@
 
   - name: POSTINSTALL 5.0 | Remove generic Kubeadmin User
     command: oc delete secrets kubeadmin -n kube-system
+    ignore_errors: yes
     register: result5
     # failed_when: "'NotFound' not in result5.stderr"  # use this when run multiple times
     tags:
@@ -289,24 +295,61 @@
     tags:
       - "10"
 
+  - name: POSTINSTALL 10.6 | Patch the Storage cluster
+    command: "{{ item }}"
+    register: result
+    loop:
+        - "oc patch storageclass thin -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"true\"}}}'"
+    when: enable_ocs_storage|bool == False
+    tags:
+      - "10"
+
   - name: POSTINSTALL 11.0 | Change registry Operator to "Managed"
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"managementState\": \"Managed\"}}' -n openshift-image-registry"
     register: result11
     tags:
       - "11"
 
-  - name: POSTINSTALL 12.0 | Enable Registry PVC
+  - name: POSTINSTALL 12.0 | Enable ocs-storagecluster-cephfs Registry PVC (OCS)
     k8s:
       state: present
       # apply: "yes"  # only works with Ansible 2.9 and higher
       namespace: "openshift-image-registry"
       src: "./postinstall/ocs4registry-pvc.yml"
+    when: enable_ocs_storage|bool == True
     tags:
       - "12"
 
-  - name: POSTINSTALL 13.0 | Change registry Operator to "Managed"
+  - name: POSTINSTALL 12.1 | Enable NFS Registry
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      namespace: "openshift-image-registry"
+      src: "./postinstall/registry-nfs-pvc.yml"
+    when: enable_nfs_storage|bool == True
+    tags:
+      - "12"
+
+  - name: POSTINSTALL 13.0 | Change registry to PVC
     command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
     register: result13
+    when: enable_nfs_storage|bool == True
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 13.1 | Change registry to PVC
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
+    register: result13
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 13.2 | Change registry to EmptyDir
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"emptyDir\": {}}}}' -n openshift-image-registry"
+    register: result13
+    when:
+      - enable_nfs_storage|bool == False
+      - enable_ocs_storage|bool == False
     tags:
       - "13"
 
