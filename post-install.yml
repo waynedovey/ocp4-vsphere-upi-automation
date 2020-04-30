@@ -56,7 +56,7 @@
     # failed_when: "'already exists' not in result2.stderr"  # use this when run multiple times
     register: result2
     ignore_errors: yes
-    when: enable_htpasswd_auth |bool == True    
+    when: enable_htpasswd_auth |bool == True
     tags:
       - "2"
 
@@ -76,7 +76,7 @@
             type: HTPasswd
             htpasswd:
               fileData:
-                name: htpasswd-secret
+                name: htpass-secret
     when: enable_htpasswd_auth |bool == True
     tags:
       - "2"
