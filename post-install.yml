@@ -76,7 +76,6 @@
             htpasswd:
               fileData:
                 name: htpasswd-secret
-    ignore_errors: yes
     tags:
       - "2"
 
@@ -117,7 +116,6 @@
                 name: ldap-secret
               insecure: true
               url: "{{ ldap_url }}"
-    ignore_errors: yes
     tags:
       - "3"
 
