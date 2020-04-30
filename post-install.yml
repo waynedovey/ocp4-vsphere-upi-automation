@@ -15,7 +15,6 @@
     oc_admin_role: "cluster-admin"
     oc_app_domain: "apps.ocp4.lab.gsslab.pek2.redhat.com"
     oc_api_domain: "api.ocp4.lab.gsslab.pek2.redhat.com"
-    # enable_ocs_storage: False
 
   environment:
     # KUBECONFIG: ./kubeconfig
