@@ -1,0 +1,460 @@
+---
+- hosts: localhost
+  connection: local
+
+  vars:
+    htpasswdpath: "./postinstall/users.htpasswd"
+    htpasswd_name: "my_htpasswd_provider"
+    htpasswd_pw: "redhat"
+    htpasswd_admin_users: "admin"
+    ldap_name: "my_ldap_provider"
+    ldap_pw: "testuser3"
+    ldap_bindDN: "uid=testuser3,ou=People,dc=example,dc=com"
+    ldap_url: "ldap://helper.ocp4.lab.gsslab.pek2.redhat.com/ou=people,dc=example,dc=com?uid"
+    ldap_admin_users: "testuser3"
+    oc_admin_role: "cluster-admin"
+    oc_app_domain: "apps.ocp4.lab.gsslab.pek2.redhat.com"
+    oc_api_domain: "api.ocp4.lab.gsslab.pek2.redhat.com"
+
+  environment:
+    # KUBECONFIG: ./kubeconfig
+    # KUBECONFIG: /root/.kube/config
+    KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+
+  tasks:
+  - name: POSTINSTALL 1.0 | Get Storage Nodes
+    shell: oc get nodes | grep storage | awk '{ print $1 }'
+    register: result1
+    # register: storagenodes
+    tags:
+      - "1"
+
+  - name: POSTINSTALL 1.1 | Set fact storagenodes
+    set_fact:
+      storagenodes: "{{ result1.stdout | from_yaml }}"
+    tags:
+      - "1"
+
+  - name: POSTINSTALL 1.2 | Display the fact storagenodes
+    debug:
+      msg: "{{ storagenodes }}"
+    tags:
+      - "1"
+
+  - name: POSTINSTALL 2.0 | Create HTPasswd file
+    htpasswd:
+      path: "{{ htpasswdpath }}"
+      name: "{{ htpasswd_admin_users }}"
+      password: "{{ htpasswd_pw }}"
+      crypt_scheme: md5_crypt
+    register: htpasswd
+    tags:
+      - "2"
+
+  - name: POSTINSTALL 2.1 | Create HTPasswd Secret
+    command: oc create secret generic htpass-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
+    # failed_when: "'already exists' not in result2.stderr"  # use this when run multiple times
+    register: result2
+    ignore_errors: yes
+    when: enable_htpasswd_auth |bool == True
+    tags:
+      - "2"
+
+  - name: POSTINSTALL 2.2 | Enable the HTPasswd User
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      definition:
+        apiVersion: config.openshift.io/v1
+        kind: OAuth
+        metadata:
+          name: cluster
+        spec:
+          identityProviders:
+          - name: "{{ htpasswd_name }}"
+            mappingMethod: claim
+            type: HTPasswd
+            htpasswd:
+              fileData:
+                name: htpass-secret
+    when: enable_htpasswd_auth |bool == True
+    tags:
+      - "2"
+
+  - name: POSTINSTALL 3.0 | Create LDAP Secret
+    command: oc create secret generic ldap-secret --from-file=htpasswd="{{ htpasswdpath }}" -n openshift-config
+    # failed_when: "'already exists' not in result3.stderr"  # use this when run multiple times
+    register: result3
+    ignore_errors: yes
+    when: enable_ldap_auth |bool == True
+    tags:
+      - "3"
+
+  - name: POSTINSTALL 3.1 | Enable the LDAP User
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      definition:
+        apiVersion: config.openshift.io/v1
+        kind: OAuth
+        metadata:
+          name: cluster
+        spec:
+          identityProviders:
+          - name: "{{ ldap_name }}"
+            mappingMethod: claim
+            type: LDAP
+            ldap:
+              attributes:
+                id:
+                - dn
+                email:
+                - mail
+                name:
+                - cn
+                preferredUsername:
+                - uid
+              bindDN: "{{ ldap_bindDN }}"
+              bindPassword:
+                name: ldap-secret
+              insecure: true
+              url: "{{ ldap_url }}"
+    when: enable_ldap_auth |bool == True
+    tags:
+      - "3"
+
+  - name: POSTINSTALL 4.0 | Elevate Users
+    command: oc adm policy add-cluster-role-to-user "{{ oc_admin_role }}" "{{ item }}"
+    loop:
+      - "{{ htpasswd_admin_users }}"
+      - "{{ ldap_admin_users }}"
+    tags:
+      - "4"
+
+  - name: POSTINSTALL 5.0 | Remove generic Kubeadmin User
+    command: oc delete secrets kubeadmin -n kube-system
+    ignore_errors: yes
+    register: result5
+    # failed_when: "'NotFound' not in result5.stderr"  # use this when run multiple times
+    tags:
+      - "5"
+
+  - name: POSTINSTALL 6.0 | Create Chrony configuration for masters
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      definition:
+        apiVersion: machineconfiguration.openshift.io/v1
+        kind: MachineConfig
+        metadata:
+          labels:
+            machineconfiguration.openshift.io/role: master
+          name: masters-chrony-configuration
+        spec:
+          config:
+            ignition:
+              config: {}
+              security:
+                tls: {}
+              timeouts: {}
+              version: 2.2.0
+            networkd: {}
+            passwd: {}
+            storage:
+              files:
+              - contents:
+                  source: data:text/plain;charset=utf-8;base64,"{{ lookup('file', 'templates/chrony.conf.j2') | string | b64encode }}"
+                  verification: {}
+                filesystem: root
+                mode: 420
+                path: /etc/chrony.conf
+          osImageURL: ""
+    tags:
+      - "6"
+
+  # - name: POSTINSTALL 6.1 | Get status of Authentication
+  #   shell: "oc describe authentication | grep -i PROGRESSING -b1 | grep Status | awk '{print $3}'"
+  #   async: 45
+  #   poll: 5
+  #   tags:
+  #     - "6"
+
+  - name: POSTINSTALL 7.0 | Create Chrony configuration for workers
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      definition:
+        apiVersion: machineconfiguration.openshift.io/v1
+        kind: MachineConfig
+        metadata:
+          labels:
+            machineconfiguration.openshift.io/role: worker
+          name: workers-chrony-configuration
+        spec:
+          config:
+            ignition:
+              config: {}
+              security:
+                tls: {}
+              timeouts: {}
+              version: 2.2.0
+            networkd: {}
+            passwd: {}
+            storage:
+              files:
+              - contents:
+                  source: data:text/plain;charset=utf-8;base64,"{{ lookup('file', 'templates/chrony.conf.j2') | string | b64encode }}"
+                  verification: {}
+                filesystem: root
+                mode: 420
+                path: /etc/chrony.conf
+          osImageURL: ""
+    tags:
+      - "7"
+
+  # - name: POSTINSTALL 7.1 | Get status of MachineConfigPool
+  #   # Example: Ready Machine Count: 3
+  #   shell: "oc describe machineconfigpool master | tail -n7 | grep Ready | awk '{print $4}'"
+  #   async: 45
+  #   poll: 5
+  #   tags:
+  #     - "7"
+
+# TODO Figure out how to declare storage nodes
+
+  - name: POSTINSTALL 8.0 | Label and Taint Storage Nodes
+    command: "{{ item }}"
+    register: result8
+    loop:
+        - "oc label nodes {{ storagenodes }} cluster.ocs.openshift.io/openshift-storage='' --overwrite"
+        - "oc adm taint nodes {{ storagenodes }} node.ocs.openshift.io/storage=true:NoSchedule --overwrite"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "8"
+
+  - name: POSTINSTALL 9.0 | Drain and uncordon Storage Nodes
+    command: "{{ item }}"
+    register: result
+    loop:
+        - "oc adm drain {{ storagenodes }} --ignore-daemonsets --delete-local-data"
+        - "oc adm uncordon {{ storagenodes }}"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "9"
+
+  - name: POSTINSTALL 10.0 | Create Storage Namespace
+    k8s:
+      state: present
+      src: "./postinstall/rhocs-namespace.yml"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
+
+  - name: POSTINSTALL 10.1 | Create Storage Operator Group
+    k8s:
+      state: present
+      src: "./postinstall/rhocs-operatorgroup.yml"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
+
+  - name: POSTINSTALL 10.2 | Create the Storage OLM
+    k8s:
+      state: present
+      apply: "yes"
+      src: "./postinstall/ocs-olm.yml"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
+
+  # - name: POSTINSTALL 10.3 | Get status of Red Hat OpenShift Container Storage (OCS) operator
+  #   shell: "oc get csv | grep ocs-operator | awk '{print $6}'"
+  #   async: 45
+  #   poll: 5
+  #   tags:
+  #     - "10"
+
+  - name: POSTINSTALL 10.4 | Create the Storage Cluster
+    k8s:
+      state: present
+      apply: "yes"
+      src: "./postinstall/ocs-StorageCluster.yml"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
+
+# TODO Figure out the escape sequence
+
+  - name: POSTINSTALL 10.5 | Patch the Storage cluster
+    command: "{{ item }}"
+    register: result
+    loop:
+        - "oc patch storageclass thin -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"false\"}}}'"
+        - "oc patch storageclass ocs-storagecluster-cephfs -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"true\"}}}'"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "10"
+
+  - name: POSTINSTALL 10.6 | Patch the Storage cluster
+    command: "{{ item }}"
+    register: result
+    loop:
+        - "oc patch storageclass thin -p '{\"metadata\": {\"annotations\": {\"storageclass.kubernetes.io/is-default-class\": \"true\"}}}'"
+    when: enable_ocs_storage|bool == False
+    tags:
+      - "10"
+
+  - name: POSTINSTALL 11.0 | Change registry Operator to "Managed"
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"managementState\": \"Managed\"}}' -n openshift-image-registry"
+    register: result11
+    tags:
+      - "11"
+
+  - name: POSTINSTALL 12.0 | Enable ocs-storagecluster-cephfs Registry PVC (OCS)
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      namespace: "openshift-image-registry"
+      src: "./postinstall/ocs4registry-pvc.yml"
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "12"
+
+  - name: POSTINSTALL 12.1 | Enable NFS Registry
+    k8s:
+      state: present
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      namespace: "openshift-image-registry"
+      src: "./postinstall/registry-nfs-pvc.yml"
+    when: enable_nfs_storage|bool == True
+    tags:
+      - "12"
+
+  - name: POSTINSTALL 13.0 | Change registry to PVC
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
+    register: result13
+    when: enable_nfs_storage|bool == True
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 13.1 | Change registry to PVC
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"image-registry-storage\"}}}}' -n openshift-image-registry"
+    register: result13
+    when: enable_ocs_storage|bool == True
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 13.2 | Change registry to EmptyDir
+    command: "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"storage\": {\"emptyDir\": {}}}}' -n openshift-image-registry"
+    register: result13
+    when:
+      - enable_nfs_storage|bool == False
+      - enable_ocs_storage|bool == False
+    tags:
+      - "13"
+
+  - name: POSTINSTALL 14.0 | Create App Cert Configmap
+    command: "oc create configmap custom-ca --from-file=ca-bundle.crt=certs/{{ oc_app_domain }}.pem -n openshift-config"
+    # failed_when: "'already exists' not in result14.stderr"  # use this when run multiple times
+    register: result14
+    tags:
+      - "14"
+
+  - name: POSTINSTALL 15.0 | Update the CA Cert with the Custom CA
+    command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
+    register: result15
+    tags:
+      - "15"
+
+  - name: POSTINSTALL 16.0 | Create the Certificate Secret
+    command: "oc patch proxy/cluster --type=merge --patch='{\"spec\":{\"trustedCA\":{\"name\":\"custom-ca\"}}}'"
+    register: result16
+    tags:
+      - "16"
+
+  - name: POSTINSTALL 17.0 | Create the Certificate Secret
+    command: "oc create secret tls {{ oc_app_domain }}.com  --cert=certs/{{ oc_app_domain }}.pem --key=certs/{{ oc_app_domain }}.key -n openshift-ingress"
+    # failed_when: "'already exists' not in result17.stderr"  # use this when run multiple times
+    register: result17
+    tags:
+      - "17"
+
+  - name: POSTINSTALL 18.0 | Enable the Certificate on Ingresscontroller
+    command: "oc patch ingresscontroller.operator default --type=merge -p '{\"spec\":{\"defaultCertificate\": {\"name\": \"{{ oc_app_domain }}\"}}}' -n openshift-ingress-operator"
+    register: result18
+    tags:
+      - "18"
+
+  - name: POSTINSTALL 19.0 | Create the API Certificate
+    command: "oc create secret tls {{ oc_api_domain }} --cert=certs/{{ oc_api_domain }}.pem --key=certs/{{ oc_api_domain }}.key -n openshift-config"
+    # failed_when: "'already exists' not in result19.stderr"  # use this when run multiple times
+    register: result19
+    tags:
+      - "19"
+
+  - name: POSTINSTALL 20.0 | Enable the API Certificate
+    command: "oc patch apiserver cluster --type=merge -p '{\"spec\":{\"servingCerts\": {\"namedCertificates\": [{\"names\": [\"{{ oc_api_domain }}\"], \"servingCertificate\": {\"name\": \"{{ oc_api_domain }}\"}}]}}}'"
+    # failed_when: "'no change' not in result20.stdout"  # use this when run multiple times
+    register: result20
+    tags:
+      - "20"
+
+  - name: POSTINSTALL 21.0 | Enable Monitoring Persistent Storage
+    k8s:
+      state: present
+      namespace: openshift-monitoring
+      # apply: "yes"  # only works with Ansible 2.9 and higher
+      src: "./postinstall/cluster-monitoring-config.yml"
+    tags:
+      - "21"
+
+  - name: POSTINSTALL 22.0 | Enable Cluster Logging (One)
+    command: "{{ item }}"
+    loop:
+      - "oc create -f ./postinstall/logging/eo-namespace.yml"
+      - "oc create -f ./postinstall/logging/clo-namespace.yml"
+      - "oc create -f ./postinstall/logging/eo-og.yml"
+      - "oc create -f ./postinstall/logging/eo-rbac.yml -n openshift-operators-redhat"
+      - "oc create -f ./postinstall/logging/cluster-logging-olm.yml -n openshift-logging"
+    register: result220
+    # failed_when: "'already exists' not in result220.stderr"  # use this when run multiple times
+    tags:
+      - "22"
+
+  - name: POSTINSTALL 22.1 | Enable Cluster Logging (Two)
+    command: "{{ item }}"
+    loop:
+      - "oc create -f ./postinstall/logging/eo-sub.yml"
+      - "oc create -f ./postinstall/logging/cluster-logging-og.yml -n openshift-logging"
+    register: result221
+    tags:
+      - "22"
+
+  - name: POSTINSTALL 23.0 | Wait for Cluster CR to appear
+    command: "sleep 30"
+    register: result23
+    tags:
+      - "23"
+
+  # - name: POSTINSTALL 24.0 | Install the Cluster Logging Operator
+  #   command: "oc create -f ./postinstall/logging/clo-og.yml"
+  #   register: result240
+  #   failed_when: "'already exists' not in result240.stderr"
+  #   tags:
+  #     - "24"
+
+  # - name: POSTINSTALL 24.1 | Create a Subscription object, channel 4.3
+  #   command: "oc create -f ./postinstall/logging/clo-sub.yml"
+  #   register: result241
+  #   failed_when: "'already exists' not in result241.stderr"
+  #   tags:
+  #     - "24"
+
+    # Possible error when using this on older OCP (e.g. OCP v4.2)
+    # error: unable to recognize "postinstall/logging/cluster-logging-crd.yml": no matches for kind "ClusterLogging" in version "logging.openshift.io/v1"
+  - name: POSTINSTALL 24.2 | Create a Cluster Logging instance
+    command: "oc create -f ./postinstall/logging/cluster-logging-crd.yml"
+    register: result242
+    failed_when: "'already exists' not in result242.stderr"
+    tags:
+      - "24"

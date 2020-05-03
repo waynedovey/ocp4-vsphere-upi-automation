@@ -1,0 +1,39 @@
+apiVersion: v1
+baseDomain: {{ config.baseDomain }}
+{% if set_proxy is defined and set_proxy | bool %}
+proxy:
+  httpProxy: {{ config.proxy }}
+  httpsProxy: {{ config.proxy }}
+  noProxy: {{ config.no_proxy }}
+{% endif %}
+compute:
+- hyperthreading: Enabled   
+  name: worker
+  replicas: 0 
+controlPlane:
+  hyperthreading: Enabled   
+  name: master
+  replicas: 3 
+metadata:
+  name: {{ config.clusterName }}
+platform:
+  vsphere:
+    vcenter: {{ vcenter.ip }}
+    username: {{ vcenter.username }}
+    password: {{ vcenter.password }}
+    datacenter: {{ vcenter.datacenter }}
+    defaultDatastore: {{ vcenter.defaultdatastore }}
+fips: false
+pullSecret: '{{ config.pullSecret | to_json }}'
+sshKey: '{{ config.sshKey }}'
+{% if disconnected is defined and disconnected | bool %}
+additionalTrustBundle: |
+{{ lookup('file', 'certs/CACert.pem') }}
+imageContentSources:
+- mirrors:
+  - {{ container_registry }}/openshift/{{ ocp_release }}
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - {{ container_registry }}/openshift/{{ ocp_release }}
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+{% endif %}

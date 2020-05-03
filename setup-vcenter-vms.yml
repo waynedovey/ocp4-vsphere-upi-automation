@@ -1,0 +1,420 @@
+---
+- hosts: localhost
+
+  vars:
+    bootstrapContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64') }}"
+    masterContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64') }}"
+    workerContent : "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64') }}"
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+
+  tasks:
+    - name: VMSETUP 1.0 | "Bootstrap base64"
+      debug:
+        msg: "{{ bootstrapContent }}"
+      tags:
+        - "1"
+
+    - name: VMSETUP 1.1 | "Master base64"
+      debug:
+        msg: "{{ masterContent }}"
+      tags:
+        - "1"
+
+    - name: VMSETUP 1.2 | "Worker base64 "
+      debug:
+        msg: "{{ workerContent }}"
+      tags:
+        - "1"
+
+    - name: VMSETUP 2.0 | Create bootstrap VM from the template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "bootstrap.{{ config.baseDomain }}"
+        state: poweredoff
+        template: "{{ templateName }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 8192
+          num_cpus: 4
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        wait_for_ip_address: no
+        customvalues:
+          - key: guestinfo.ignition.config.data
+            value: "{{ bootstrapContent }}"
+          - key: guestinfo.ignition.config.data.encoding
+            value: base64
+          - key: disk.EnableUUID
+            value: "TRUE"
+          - key: timezone
+            value: "UTC"
+          - key: hwclockUTC
+            value: "TRUE"
+      tags:
+        - "2"
+
+    - name: VMSETUP 2.1 | Create master VMs from ther template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 16384
+          num_cpus: 4
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ masterContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      loop:
+        - { name : "master0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+      tags:
+        - "2"
+
+    - name: VMSETUP 2.2 | Create worker VMs from the template (not using Multus)
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: "{{ worker_memory }}"
+          num_cpus: "{{ worker_cpu }}"
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      loop:
+        - { name : "worker0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+      when: enable_multus|bool == False
+      tags:
+        - "2"
+
+    - name: VMSETUP 2.3 | Create worker VMs from the template (using Multus)
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: "{{ worker_memory }}"
+          num_cpus: "{{ worker_cpu }}"
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        - name: "{{ vcenter.vm_network_2 }}"
+        - name: "{{ vcenter.vm_network_3 }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      loop:
+        - { name : "worker0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+      when: enable_multus|bool == True
+      tags:
+        - "2"
+
+    - name: VMSETUP 2.4 | Create Storage VMs from the template
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredoff
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 67584
+          num_cpus: 16
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_1 }}"
+        wait_for_ip_address: no
+        customvalues:
+         - key: guestinfo.ignition.config.data
+           value: "{{ workerContent }}"
+         - key: guestinfo.ignition.config.data.encoding
+           value: base64
+         - key: disk.EnableUUID
+           value: "TRUE"
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      loop:
+        - { name : "storage0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+      when: enable_ocs_storage|bool == True
+      tags:
+        - "2"
+
+    - name: VMSETUP 3.0 | Update Mac Address Core Cluster
+      command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "bootstrap.{{ config.baseDomain }}", mac: "{{ config.bootstrapmac }}" }
+        - { name : "master0.{{ config.baseDomain }}", mac: "{{ config.master0mac }}" }
+        - { name : "master1.{{ config.baseDomain }}", mac: "{{ config.master1mac }}" }
+        - { name : "master2.{{ config.baseDomain }}", mac: "{{ config.master2mac }}" }
+        - { name : "worker0.{{ config.baseDomain }}", mac: "{{ config.worker0mac }}" }
+        - { name : "worker1.{{ config.baseDomain }}", mac: "{{ config.worker1mac }}" }
+        - { name : "worker2.{{ config.baseDomain }}", mac: "{{ config.worker2mac }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "3"
+
+    - name: VMSETUP 3.1 | Update Mac Address Store Nodes
+      command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "storage0.{{ config.baseDomain }}", mac: "{{ config.storage0mac }}" }
+        - { name : "storage1.{{ config.baseDomain }}", mac: "{{ config.storage1mac }}" }
+        - { name : "storage2.{{ config.baseDomain }}", mac: "{{ config.storage2mac }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      when: enable_ocs_storage|bool == True
+      tags:
+        - "3"
+
+    - name: VMSETUP 4.0 | Update CPU latencySensitivity Core Cluster
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "bootstrap.{{ config.baseDomain }}" }
+        - { name : "master0.{{ config.baseDomain }}" }
+        - { name : "master1.{{ config.baseDomain }}" }
+        - { name : "master2.{{ config.baseDomain }}" }
+        - { name : "worker0.{{ config.baseDomain }}" }
+        - { name : "worker1.{{ config.baseDomain }}" }
+        - { name : "worker2.{{ config.baseDomain }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "4"
+
+    - name: VMSETUP 4.1 | Update CPU latencySensitivity Core Cluster
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -e sched.cpu.latencySensitivity=high"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+        - { name : "storage0.{{ config.baseDomain }}" }
+        - { name : "storage1.{{ config.baseDomain }}" }
+        - { name : "storage2.{{ config.baseDomain }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      when: enable_ocs_storage|bool == True
+      tags:
+        - "4"
+
+    - name: VMSETUP 5.0 | Start all Core Cluster VM's
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: poweredon
+      loop:
+        - { name : "bootstrap.{{ config.baseDomain }}" }
+        - { name : "master0.{{ config.baseDomain }}" }
+        - { name : "master1.{{ config.baseDomain }}" }
+        - { name : "master2.{{ config.baseDomain }}" }
+        - { name : "worker0.{{ config.baseDomain }}" }
+        - { name : "worker1.{{ config.baseDomain }}" }
+        - { name : "worker2.{{ config.baseDomain }}" }
+      tags:
+        - "5"
+
+    - name: VMSETUP 5.1 | Start all Storage Cluster VM's
+      vmware_guest:
+          hostname: "{{ vcenter.ip }}"
+          username: "{{ vcenter.username }}"
+          password: "{{ vcenter.password }}"
+          datacenter: "{{ vcenter.datacenter }}"
+          validate_certs: no
+          folder: "{{ folder }}"
+          name: "{{ item.name }}"
+          state: poweredon
+      loop:
+        - { name : "storage0.{{ config.baseDomain }}" }
+        - { name : "storage1.{{ config.baseDomain }}" }
+        - { name : "storage2.{{ config.baseDomain }}" }
+      when: enable_ocs_storage|bool == True
+      tags:
+        - "5"
+
+    - name: VMSETUP 5.2 | Label Core Cluster VM's
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }},OCP-Release-{{ ocp_version }},Instance-Owner-Red-Hat-SSA-Team"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+         - { name : "bootstrap.{{ config.baseDomain }}" }
+         - { name : "master0.{{ config.baseDomain }}" }
+         - { name : "master1.{{ config.baseDomain }}" }
+         - { name : "master2.{{ config.baseDomain }}" }
+         - { name : "worker0.{{ config.baseDomain }}" }
+         - { name : "worker1.{{ config.baseDomain }}" }
+         - { name : "worker2.{{ config.baseDomain }}" }
+      tags:
+        - "5"
+
+    - name: VMSETUP 5.3 | Label Storage Cluster VM's
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }},OCP-Release-{{ ocp_version }},Instance-Owner-Red-Hat-SSA-Team"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+         - { name : "storage0.{{ config.baseDomain }}" }
+         - { name : "storage1.{{ config.baseDomain }}" }
+         - { name : "storage2.{{ config.baseDomain }}" }
+      when: enable_ocs_storage|bool == True
+      tags:
+        - "5"
+

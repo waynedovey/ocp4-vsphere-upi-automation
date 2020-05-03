@@ -1,0 +1,285 @@
+---
+- hosts: localhost
+  gather_facts: false
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: helper
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
+
+  tasks:
+
+    - name: VMSETUP 1.0 | Create Helper Node 
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ hostname }}.{{ config.baseDomain }}"
+        state: present
+        template: "rhel7.7-template"
+        disk:
+        - size_gb: 30
+          type: thin
+          datastore: "{{ datastore }}"
+        hardware:
+          memory_mb: 4096
+          num_cpus: 2
+          memory_reservation_lock: True
+        networks:
+        - name: "{{ vcenter.vm_network_3 }}"
+        - name: "{{ vcenter.vm_network_1 }}"
+        customvalues:
+         - key: timezone
+           value: "UTC"
+         - key: hwclockUTC
+           value: "TRUE"
+      register: helpernode
+      tags:
+        - "1"
+
+    - name: VMSETUP 2.0 | Update Mac Address Core Cluster
+      command: "{{ govc_file }} vm.network.change -net.address {{ item.mac }} -vm={{ item.name }} ethernet-0"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_3 }}"
+      loop:
+        - { name : "{{ hostname }}.{{ config.baseDomain }}", mac: "{{ helper.macaddr }}" }
+      retries: 3
+      delay: 3
+      register: result
+      until: result.rc == 0
+      tags:
+        - "2"
+
+    - name: VMSETUP 3.0 | Start Helper Node
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ hostname }}.{{ config.baseDomain }}"
+        state: poweredon
+        wait_for_ip_address: yes
+      register: helpernode
+      tags:
+        - "3"
+
+    - name: VMSETUP 3.1 | Label Helper Node
+      command: "{{ govc_file }} vm.change -vm={{ item.name }} -annotation=Cluster-Name-{{ BUILD_LAB }}-{{ config.clusterName }}-{{ domain }},Instance-Owner-Red-Hat-SSA-Team"
+      environment:
+        GOVC_HOST: "{{ vcenter.ip }}"
+        GOVC_URL: "https://{{ vcenter.ip }}/sdk"
+        GOVC_USERNAME: "{{ vcenter.username }}"
+        GOVC_PASSWORD: "{{ vcenter.password }}"
+        GOVC_INSECURE: 1
+        GOVC_DATASTORE: "{{ vcenter.datastore }}"
+        GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+        GOVC_CLUSTER: "{{ vcenter.cluster }}"
+        GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      loop:
+         - { name : "{{ hostname }}.{{ config.baseDomain }}" }
+      tags:
+        - "3"
+
+    - name: VMSETUP 4.0 | Set Facts 
+      set_fact:
+        new_vm: "{{ helpernode }}"
+      tags:
+        - "4"
+
+    - name: VMSETUP 4.1 | Dynamic Nodes
+      add_host:
+        hostname: "{{ item.hw_name }}"
+        ansible_host: "{{ item.ipv4 }}"
+        groups: helpernode_ssh
+      with_items:
+        - "{{ new_vm.instance }}"
+      tags:
+        - "4"
+
+- name: Configure Helper
+  hosts: helpernode_ssh
+  become: yes
+  become_method: sudo
+  gather_facts: false
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: "helper"
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
+
+  tasks:
+
+    - name: HELPER 5.0 | Wait for SSH banners
+      local_action: wait_for port=22 host={{ ansible_host }} search_regex=OpenSSH delay=5
+      become: false
+      tags:
+        - "5"
+
+    - name: HELPER 6.0 | Set Hostname
+      hostname: name="{{ hostname }}.{{ config.baseDomain }}"
+      tags:
+        - "6"
+
+    - name: HELPER 7.0 | Enable RHEL Subs
+      redhat_subscription:
+        state: present
+        username: "{{ rhn.username }}"
+        password: "{{ rhn.password }}"
+        pool_ids: "{{ rhn.pool_ids }}"
+        force_register: true
+      register: subscrition_result
+      retries: 5
+      delay: 10
+      until: not subscrition_result.failed
+      tags:
+        - "7"
+
+    - name: HELPER 8.0 | Clean RHEL Repos
+      rhsm_repository:
+        name: '*'
+        state: disabled
+      register: subscrition_result
+      retries: 5
+      delay: 10
+      until: not subscrition_result.failed
+      tags:
+        - "8"
+
+    - name: HELPER 9.0 | Enable RHEL Repos
+      rhsm_repository:
+        name: "{{ item }}"
+        state: enabled
+      with_items:
+        - rhel-7-server-rpms
+        - rhel-7-server-extras-rpms
+        - rhel-7-server-ansible-2.9-rpms
+      register: subscrition_result
+      retries: 5
+      delay: 10
+      until: not subscrition_result.failed
+      tags:
+        - "9"
+
+    - name: HELPER 10.0 | Install packages
+      yum: name={{ item }} update_cache=yes state=latest
+      with_items:
+        - git
+        - NetworkManager-glib
+        - nm-connection-editor.x86_64
+        - libsemanage-python 
+        - policycoreutils-python
+      tags:
+        - "10"
+
+    - name: HELPER 11.0 | Add Interface
+      nmcli:
+        conn_name: "{{ helper.networkifacename }}"
+        ifname: "{{ helper.networkifacename }}"
+        type: ethernet
+        ip4: "{{ dhcp.router }}/24"
+        gw4: "{{ ansible_host }}"
+        state: present
+      tags:
+        - "11"
+
+    - name: HELPER 11.1 | Add DNS
+      nmcli:
+        conn_name: "{{ helper.networkifacename }}"
+        type: ethernet
+        dns4:
+        - 127.0.0.1
+        state: present
+      tags:
+        - "11"
+
+    - name: HELPER 11.2 | Add DNS
+      nmcli:
+        conn_name: "{{ helper.networkifdefault }}"
+        type: ethernet
+        dns4:
+        - 127.0.0.1
+        state: present
+      tags:
+        - "11"
+
+    - name: HELPER 12.0 | Enable IP Forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+      tags:
+        - "12"
+
+    - name: HELPER 13.0 | Ensure the Interface is Static
+      shell: nmcli connection modify "{{ helper.networkifacename }}" ipv4.method static
+      tags:
+        - "13"
+
+    - name: HELPER 13.1 | Remove DHCP DNS
+      shell: nmcli con mod "{{ helper.networkifacename }}" ipv4.ignore-auto-dns yes
+      tags:
+        - "13"
+
+    - name: HELPER 13.2 | Remove DHCP DNS
+      shell: nmcli con mod "{{ helper.networkifdefault }}"  ipv4.ignore-auto-dns yes
+      tags:
+        - "13"
+
+    - name: HELPER 14.0 | Copy SSH Private Keys
+      copy:
+        src: ~/.ssh/id_rsa
+        dest: "/root/.ssh/id_rsa"
+        mode: 0400
+      tags:
+        - "14"
+
+    - name: HELPER 14.1 | Copy SSH Public Keys
+      copy:
+        src: ~/.ssh/id_rsa.pub
+        dest: "/root/.ssh/id_rsa.pub"
+        mode: 0600
+      tags:
+        - "14"
+
+
+- name: Build Helper
+  hosts: helpernode_ssh
+  become: yes
+  become_method: sudo
+  gather_facts: false
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: "helper"
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
+
+  roles:
+    - ocp4-upi-helpernode

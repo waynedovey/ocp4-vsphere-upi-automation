@@ -1,0 +1,199 @@
+- hosts: localhost
+
+  vars:
+    masterContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/master.64' )}}"
+    workerContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/worker.64' )}}"
+    appendBootstrapContent: "{{ lookup('file', '{{ playbook_dir }}/install-dir/append-bootstrap.64' )}}"
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: helper
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
+
+  tasks:
+
+  - name: VMWARE_PREP 1.0 | Create bin, install-dir and downloads folders
+    file:
+      path: "{{ playbook_dir }}/{{ item }}"
+      state: directory
+      mode: '0755'
+    with_items: ["bin", "downloads", "install-dir"]
+    tags:
+      - "1"
+
+  - name: VMWARE_PREP 2.0 | Download the latest RHCOS OVA file
+    get_url:
+      url: "{{ download.ova_image }}"
+      dest: "{{ playbook_dir }}/downloads/{{ templateName }}.ova"
+    tags:
+      - "2"
+
+  - name: VMWARE_PREP 2.1 | Upload the latest RHCOS OVA file to VMWare
+    command: "{{ govc_file }} import.ova -name={{ templateName }} {{ playbook_dir }}/downloads/{{ templateName }}.ova "
+    environment:
+      GOVC_URL: "{{ vcenter.ip }}"
+      GOVC_USERNAME: "{{ vcenter.username }}"
+      GOVC_PASSWORD: "{{ vcenter.password }}"
+      GOVC_INSECURE: 1
+      GOVC_DATASTORE: "{{ vcenter.datastore }}"
+      GOVC_DATACENTER: "{{ vcenter.datacenter }}"
+      GOVC_CLUSTER: "{{ vcenter.cluster }}"
+      GOVC_NETWORK: "{{ vcenter.vm_network_1 }}"
+      # GOVC_RESOURCE_POOL: ""
+    ignore_errors: yes
+    tags:
+      - "2"
+
+  - name: VMWARE_PREP 3.0 | Unarchive oc client
+    unarchive:
+      src: "{{ download.oc_client }}"
+      dest: "{{ playbook_dir }}/bin"
+      remote_src: yes
+    tags:
+      - "3"
+
+  - name: VMWARE_PREP 4.0 | Unarchive openshift-install
+    unarchive:
+      src: "{{ download.openshift_install }}"
+      dest: "{{ playbook_dir }}/bin"
+      remote_src: yes
+    tags:
+      - "4"
+
+  - name: VMWARE_PREP 5.0 | Copy install-config.yaml file into install-dir
+    template:
+      src: "{{ playbook_dir }}/templates/install-config.yaml.j2"
+      dest: "{{ playbook_dir }}/install-dir/install-config.yaml"
+    tags:
+      - "5"
+
+  - name: VMWARE_PREP 6.0 | Backup the install-config.yaml file
+    copy:
+      src: "{{ playbook_dir }}/install-dir/install-config.yaml"
+      dest: "{{ playbook_dir }}/install-dir/install-config.yaml.orig"
+    tags:
+      - "6"
+
+  - name: VMWARE_PREP 7.0 | Generate the ignition manifests
+    command: "{{ playbook_dir }}/bin/openshift-install create manifests --dir={{ playbook_dir }}/install-dir"
+    tags:
+      - "7"
+
+  - name: VMWARE_PREP 8.0 | Apply the patch to set mastersSchedulable to false
+    patch:
+      src: "{{ playbook_dir }}/patches/cluster-scheduler-02-config.yml.patch"
+      dest: "{{ playbook_dir }}/install-dir/manifests/cluster-scheduler-02-config.yml"
+    tags:
+      - "8"
+
+  - name: VMWARE_PREP 9.0 | Generate the ignition configs
+    command: "{{ playbook_dir }}/bin/openshift-install create ignition-configs --dir={{ playbook_dir }}/install-dir"
+    tags:
+      - "9"
+
+  - name: VMWARE_PREP 10.0 | Copy append-bootstrap.ign file into install-dir
+    template:
+      src: "{{ playbook_dir }}/templates/append-bootstrap.ign.j2"
+      dest: "{{ playbook_dir }}/install-dir/append-bootstrap.ign"
+    tags:
+      - "10"
+
+  - name: VMWARE_PREP 11.0 | Get base64 version of append-bootstrap.ign
+    shell: "base64 -w0 {{ playbook_dir }}/install-dir/append-bootstrap.ign > {{ playbook_dir }}/install-dir/append-bootstrap.64"
+    tags:
+      - "11"
+
+  - name: VMWARE_PREP 11.1 | Get base64 version of master.ign
+    shell: "base64 -w0 {{ playbook_dir }}/install-dir/master.ign > {{ playbook_dir }}/install-dir/master.64"
+    tags:
+      - "11"
+
+  - name: VMWARE_PREP 11.2 | Get base64 version of worker.ign
+    shell: "base64 -w0 {{ playbook_dir }}/install-dir/worker.ign > {{ playbook_dir }}/install-dir/worker.64"
+    tags:
+      - "11"
+
+  - name: VMWARE_PREP 12.0 | Get master VM parameters
+    template:
+      src: "{{ playbook_dir }}/templates/master-vm-param.j2"
+      dest: "{{ playbook_dir }}/install-dir/master-vm-param.txt"
+    tags:
+      - "12"
+
+  - name: VMWARE_PREP 12.1 | Get worker VM parameters
+    template:
+      src: "{{ playbook_dir }}/templates/worker-vm-param.j2"
+      dest: "{{ playbook_dir }}/install-dir/worker-vm-param.txt"
+    tags:
+      - "12"
+
+  - name: VMWARE_PREP 13.0 | Get the append parameters
+    template:
+      src: "{{ playbook_dir }}/templates/append-bootstrap-vm-param.j2"
+      dest: "{{ playbook_dir }}/install-dir/append-bootstrap-vm-param.txt"
+    tags:
+      - "13"
+
+  - name: HELPESETUP 14.0 | Get Helper Node info
+    vmware_guest:
+      hostname: "{{ vcenter.ip }}"
+      username: "{{ vcenter.username }}"
+      password: "{{ vcenter.password }}"
+      datacenter: "{{ vcenter.datacenter }}"
+      validate_certs: no
+      folder: "{{ folder }}"
+      name: "{{ hostname }}.{{ config.baseDomain }}"
+      state: poweredon
+      wait_for_ip_address: yes
+    register: helpernode
+    tags:
+      - "14"
+
+  - name: HELPESETUP 15.0 | Set Facts
+    set_fact:
+      new_vm: "{{ helpernode }}"
+    tags:
+      - "15"
+
+  - name: HELPESETUP 16.0 | Dynamic Nodes
+    add_host:
+      hostname: "{{ item.hw_name }}"
+      ansible_host: "{{ item.ipv4 }}"
+      groups: helpernode_ssh
+    with_items:
+      - "{{ new_vm.instance }}"
+    tags:
+      - "16"
+
+- name: Configure Helper
+  hosts: helpernode_ssh
+  become: yes
+  become_method: sudo
+  gather_facts: false
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+    hostname: "helper"
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+    - "./vars/vars-helpernode-{{ BUILD_LAB }}.yaml"
+
+  tasks:
+
+    - name: HELPESETUP 17.0 | Wait for SSH banners
+      local_action: wait_for port=22 host={{ ansible_host }} search_regex=OpenSSH delay=5
+      become: false
+      tags:
+        - "17"
+
+    - name: HELPESETUP 18.0 | Set Hostname
+      copy:
+        src: install-dir/bootstrap.ign
+        dest: /var/www/html/ignition/bootstrap.ign
+        mode: '644'
+      tags:
+        - "18"

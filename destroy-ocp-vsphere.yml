@@ -1,0 +1,49 @@
+---
+- hosts: localhost
+
+  vars:
+    folder : "/{{ vcenter.datacenter }}/vm/openshift/{{ config.clusterName }}"
+    datastore: "{{ vcenter.datastore }}"
+    govc_file: "/usr/local/bin/govc"
+  vars_files:
+    - "./vars/vars-{{ BUILD_LAB }}.yml"
+
+  environment:
+    # KUBECONFIG: ./kubeconfig
+    # KUBECONFIG: /root/.kube/config
+    KUBECONFIG: /root/ocp4-vsphere-upi-automation/install-dir/auth/kubeconfig
+
+  tasks:
+    - name: VMSETUP 1.0 | Remove Nodes
+      vmware_guest:
+        hostname: "{{ vcenter.ip }}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter: "{{ vcenter.datacenter }}"
+        cluster: "{{ vcenter.cluster }}"
+        validate_certs: no
+        folder: "{{ folder }}"
+        name: "{{ item.name }}"
+        state: absent
+        force: yes
+        template: "{{ item.template }}"
+        disk:
+        - size_gb: 16
+          type: thin
+          datastore: "{{ datastore }}"
+      loop:
+        - { name : "bootstrap.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "master2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "storage2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker0.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker1.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker2.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker3.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker4.{{ config.baseDomain }}", template: "{{ templateName }}" }
+        - { name : "worker5.{{ config.baseDomain }}", template: "{{ templateName }}" }
+      tags:
+        - "1"

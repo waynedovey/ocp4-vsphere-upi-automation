@@ -1,0 +1,31 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: masters-chrony-configuration
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 2.2.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+      # Equals to:
+      # server clock.ocp4.ocp4lab.govt.container iburst
+      # driftfile /var/lib/chrony/drift
+      # makestep 10 3
+      # rtcsync
+      # logdir /var/log/chrony
+          source: data:text/plain;charset=utf-8;base64,c2VydmVyIGNsb2NrLm9jcDQub2NwNGxhYi5nb3Z0LmNvbnRhaW5lciBpYnVyc3QKZHJpZnRmaWxlIC92YXIvbGliL2Nocm9ueS9kcmlmdAptYWtlc3RlcCAxMCAzCnJ0Y3N5bmMKbG9nZGlyIC92YXIvbG9nL2Nocm9ueQo=
+          verification: {}
+        filesystem: root
+        mode: 420
+        path: /etc/chrony.conf
+  osImageURL: ""
