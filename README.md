@@ -10,6 +10,7 @@ With all the details in hand from the prerequisites, populate the **vars/vars-${
 
 * Ansible `2.X`
 * Python module `openshift-0.10.3` or higher (you might have to do `alternatives --install /usr/bin/python python /usr/bin/python3 1 ; pip3 install openshift --user`)
+* MacOS `pip install requests` `pip install PyVmomi`
 
 ## Examples Runs
 
