@@ -279,6 +279,7 @@
       state: present
       apply: "yes"
       src: "./postinstall/ocs-StorageCluster.yml"
+      namespace: "openshift-storage"
     when: enable_ocs_storage|bool == True
     tags:
       - "10"
