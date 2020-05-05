@@ -9,4 +9,4 @@ users:
     ssh_import_id: None
     lock_passwd: true
     ssh_authorized_keys:
-    - ssh-rsa '{{ config.sshKey }}'
+    - ssh-rsa {{ config.sshKey }}
