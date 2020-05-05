@@ -238,7 +238,7 @@ yum install -y https://github.com/vmware/cloud-init-vmware-guestinfo/releases/do
 curl -sSL https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo/master/install.sh | sh -
 ```
 
-### MetaData and UserData Creation
+### MetaData and UserData Creation (Currently Automated on Helper Create)
 
 ```bash
 cat <<EOF > metadata.yaml
