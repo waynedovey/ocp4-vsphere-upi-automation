@@ -4,3 +4,5 @@ install-dir/
 roles/
 ocp4-vsphere-upi-automation-vault.yml
 postinstall/users.htpasswd
+temp/metadata.yaml
+temp/userdata.yaml
