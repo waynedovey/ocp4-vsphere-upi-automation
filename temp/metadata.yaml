@@ -1,9 +1,0 @@
-instance-id: helper
-local-hostname: helper
-network:
-  version: 2
-  ethernets:
-    nics:
-      match:
-        name: ens*
-      dhcp4: yes
