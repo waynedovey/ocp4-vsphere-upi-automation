@@ -11,7 +11,7 @@
 
   tasks:
 
-    - name: VMSETUP 1.0 | Destroy Helper Node 
+    - name: VMSETUP 1.0 | Destroy Helper Node
       vmware_guest:
         hostname: "{{ vcenter.ip }}"
         username: "{{ vcenter.username }}"
@@ -32,3 +32,17 @@
       tags:
         - "1"
 
+    - name: VMSETUP 2.0 | VMware Cluster Folder Remove
+      vcenter_folder:
+        hostname: "{{ vcenter.ip}}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter_name: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        parent_folder: "openshift"
+        folder_name: "{{ config.clusterName }}"
+        folder_type: vm
+        state: absent
+      ignore_errors: true
+      tags:
+        - "1"
