@@ -15,45 +15,74 @@
 
   tasks:
 
-    - name: VMSETUP 1.0 | Prep Template Metadata
+    - name: VMSETUP 1.1 | VMware Service Folder Create
+      vcenter_folder:
+        hostname: "{{ vcenter.ip}}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter_name: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        folder_name: "openshift"
+        folder_type: vm
+        state: present
+      ignore_errors: true
+      tags:
+        - "1"
+
+    - name: VMSETUP 1.2 | VMware Cluster Folder Create
+      vcenter_folder:
+        hostname: "{{ vcenter.ip}}"
+        username: "{{ vcenter.username }}"
+        password: "{{ vcenter.password }}"
+        datacenter_name: "{{ vcenter.datacenter }}"
+        validate_certs: no
+        parent_folder: "openshift"
+        folder_name: "{{ config.clusterName }}"
+        folder_type: vm
+        state: present
+      ignore_errors: true
+      tags:
+        - "1"
+
+    - name: VMSETUP 1.3 | Prep Template Metadata
       template:
         src: "{{ playbook_dir }}/templates/metadata.yaml.j2"
         dest: "{{ playbook_dir }}/temp/metadata.yaml"
       tags:
         - "1"
 
-    - name: VMSETUP 1.1 | Create Metadata Variable
+    - name: VMSETUP 1.4 | Create Metadata Variable
       shell: "gzip -c9 <temp/metadata.yaml | { base64 -w0 2>/dev/null || base64; }"
       register: raw_metadata
       tags:
         - "1"
 
-    - name: VMSETUP 1.2 | Set Facts Metadata
+    - name: VMSETUP 1.5 | Set Facts Metadata
       set_fact:
         metadata: "{{ raw_metadata.stdout }}"
       tags:
         - "1"
 
-    - name: VMSETUP 1.2 | Prep Template UserData
+    - name: VMSETUP 1.6 | Prep Template UserData
       template:
         src: "{{ playbook_dir }}/templates/userdata.yaml.j2"
         dest: "{{ playbook_dir }}/temp/userdata.yaml"
       tags:
         - "1"
 
-    - name: VMSETUP 1.3 | Create UserData Variable
+    - name: VMSETUP 1.7 | Create UserData Variable
       shell: "gzip -c9 <temp/userdata.yaml | { base64 -w0 2>/dev/null || base64; }"
       register: raw_userdata
       tags:
         - "1"
 
-    - name: VMSETUP 1.4 | Set Facts UserData
+    - name: VMSETUP 1.8 | Set Facts UserData
       set_fact:
         userdata: "{{ raw_userdata.stdout }}"
       tags:
         - "1"
 
-    - name: VMSETUP 1.5 | Update RHEL Template
+    - name: VMSETUP 1.9 | Update RHEL Template
       command: '{{ govc_file }} vm.change -vm "{{ rhel_template }}" -e guestinfo.metadata="{{ metadata }}" -e guestinfo.metadata.encoding="gzip+base64" -e guestinfo.userdata="{{ userdata }}" -e guestinfo.userdata.encoding="gzip+base64"'
       environment:
         GOVC_HOST: "{{ vcenter.ip }}"

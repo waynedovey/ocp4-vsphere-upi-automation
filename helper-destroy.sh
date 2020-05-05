@@ -14,6 +14,3 @@ printf "* Cluster Name: ${BUILD_LAB}\n\n"
 
 # Build Node
 ansible-playbook -e "BUILD_LAB=${BUILD_LAB}" -e @./vars/vars-${BUILD_LAB}.yml helper-destroy-vsphere.yml --vault-password-file=ocp4-vsphere-upi-automation-vault.yml
-
-# Update the Helper Node
-#ansible-playbook -e @./vars/vars-helpernode-${BUILD_LAB}.yaml setup-helpernode.yml
