@@ -16,7 +16,7 @@ With all the details in hand from the prerequisites, populate the **vars/vars-${
 ## Examples Runs
 
 # First Step: Create the Helper Node 
-## Note requires rhel7.7-template file and Cloud-init installation 
+## Note requires VMware rhel7.7-template (Vanilla RHEL) and Cloud-init installation:
 
 https://github.com/waynedovey/ocp4-vsphere-upi-automation#rhel-or-centos-template-node-cloud-init-install
 
