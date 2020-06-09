@@ -15,6 +15,38 @@ With all the details in hand from the prerequisites, populate the **vars/vars-${
 
 ## Examples Runs
 
+# First Step: Create the Helper Node 
+## Note requires rhel7.7-template file and Cloud-init installation 
+
+https://github.com/waynedovey/ocp4-vsphere-upi-automation#rhel-or-centos-template-node-cloud-init-install
+
+## Helper Node Deploy and Build
+
+```bash
+./helper-deploy.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
+## Helper Node Build (Standalone)
+
+```bash
+./helpernode-build.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
+## Helper Node destroy
+
+```bash
+./helper-destroy.sh
+Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
+
+* Cluster Name: gsslab
+```
+
 ### Automated Build with Prompted options with Vault Encrypted Vars and Version Status Checking
 
 ```bash
@@ -43,33 +75,6 @@ true
 
 ```bash
 ./cluster-build-novault.sh
-```
-
-## Helper Node Deploy and Build
-
-```bash
-./helper-deploy.sh
-Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
-
-* Cluster Name: gsslab
-```
-
-## Helper Node Build (Standalone)
-
-```bash
-./helpernode-build.sh
-Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
-
-* Cluster Name: gsslab
-```
-
-## Helper Node destroy
-
-```bash
-./helper-destroy.sh
-Specify Build Name (gsslab, pek2lab, <custom> ): (Press ENTER for default: gsslab)
-
-* Cluster Name: gsslab
 ```
 
 ## Manual install
